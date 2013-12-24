@@ -43,6 +43,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -182,6 +183,23 @@ public class CameraUtil {
                 && isSupported(Parameters.FOCUS_MODE_AUTO,
                         params.getSupportedFocusModes()));
     }
+
+    public static boolean isSupported(Parameters params, String key) {
+        return (params.get(key) != null && !"null".equals(params.get(key)));
+    }
+
+    public static int getNumSnapsPerShutter(Parameters params) {
+        String numJpegs = params.get("num-jpegs-per-shutter");
+        if (!TextUtils.isEmpty(numJpegs)) {
+            return Integer.valueOf(numJpegs);
+        }
+        String numSnaps = params.get("num-snaps-per-shutter");
+        if (!TextUtils.isEmpty(numSnaps)) {
+            return Integer.valueOf(numSnaps);
+        }
+        return 1;
+    }
+
 
     // Private intent extras. Test only.
     private static final String EXTRAS_CAMERA_FACING =

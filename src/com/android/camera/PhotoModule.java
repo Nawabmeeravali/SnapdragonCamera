@@ -1444,7 +1444,7 @@ public class PhotoModule
             if(mSnapshotMode == CameraInfoWrapper.CAMERA_SUPPORT_MODE_ZSL) {
                 Log.v(TAG, "JpegPictureCallback : in zslmode");
                 mParameters = mCameraDevice.getParameters();
-                mBurstSnapNum = mParameters.getInt("num-snaps-per-shutter");
+                mBurstSnapNum = CameraUtil.getNumSnapsPerShutter(mParameters);
             }
             Log.v(TAG, "JpegPictureCallback: Received = " + mReceivedSnapNum +
                       "Burst count = " + mBurstSnapNum);
@@ -1869,11 +1869,6 @@ public class PhotoModule
             mParameters = mCameraDevice.getParameters();
         }
 
-        try {
-            mBurstSnapNum = mParameters.getInt("num-snaps-per-shutter");
-        }catch (NumberFormatException ex){
-            mBurstSnapNum = 1;
-        }
         mReceivedSnapNum = 0;
         mPreviewRestartSupport = PersistUtil.isPreviewRestartEnabled();
         mPreviewRestartSupport &= CameraSettings.isInternalPreviewSupported(
