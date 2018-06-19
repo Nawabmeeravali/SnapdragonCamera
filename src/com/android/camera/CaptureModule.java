@@ -1795,6 +1795,17 @@ public class CaptureModule implements CameraModule, PhotoController,
             applyZoom(captureBuilder, id);
 
             captureBuilder.addTarget(mVideoSnapshotImageReader.getSurface());
+            // send snapshot stream together with preview and video stream for snapshot request
+            // stream is the surface for the app
+            Surface surface = getPreviewSurfaceForSession(id);
+            if (getFrameProcFilterId().size() == 1 && getFrameProcFilterId().get(0) ==
+                    FrameProcessor.FILTER_MAKEUP) {
+                captureBuilder.addTarget(mFrameProcessor.getInputSurfaces().get(0));
+            } else {
+                captureBuilder.addTarget(surface);
+            }
+            List<Surface> surfaces = new ArrayList<>();
+            addPreviewSurface(captureBuilder, surfaces, id);
 
             mCurrentSession.capture(captureBuilder.build(),
                     new CameraCaptureSession.CaptureCallback() {
@@ -3336,31 +3347,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         try {
             setUpMediaRecorder(cameraId);
-            try {
-                mMediaRecorder.start(); // Recording is now started
-            } catch (RuntimeException e) {
-                Toast.makeText(mActivity,"Could not start media recorder.\n " +
-                        "Can't start video recording.", Toast.LENGTH_LONG).show();
-                releaseMediaRecorder();
-                releaseAudioFocus();
-                mStartRecPending = false;
-                mIsRecordingVideo = false;
-                return false;
-            }
-            if (mUnsupportedResolution == true ) {
-                Log.v(TAG, "Unsupported Resolution according to target");
-                mStartRecPending = false;
-                mIsRecordingVideo = false;
-                return false;
-            }
-            if (mMediaRecorder == null) {
-                Log.e(TAG, "Fail to initialize media recorder");
-                mStartRecPending = false;
-                mIsRecordingVideo = false;
-                return false;
-            }
-
-            requestAudioFocus();
             mUI.clearFocus();
             mUI.hideUIwhileRecording();
             mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[cameraId]);
@@ -3430,6 +3416,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         + e.getMessage());
                             e.printStackTrace();
                         }
+                        if (!mFrameProcessor.isFrameListnerEnabled() && !startMediaRecorder()) {
+                            mUI.showUIafterRecording();
+                            releaseMediaRecorder();
+                            mFrameProcessor.setVideoOutputSurface(null);
+                            restartSession(true);
+                            return;
+                        }
                         mUI.clearFocus();
                         mUI.resetPauseButton();
                         mRecordingTotalTime = 0L;
@@ -3463,6 +3456,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                             e.printStackTrace();
                         } catch (IllegalStateException e) {
                             e.printStackTrace();
+                        }
+                        if (!mFrameProcessor.isFrameListnerEnabled() && !startMediaRecorder()) {
+                            mUI.showUIafterRecording();
+                            releaseMediaRecorder();
+                            mFrameProcessor.setVideoOutputSurface(null);
+                            restartSession(true);
+                            return;
                         }
                         mUI.clearFocus();
                         mUI.resetPauseButton();
@@ -3508,6 +3508,43 @@ public class CaptureModule implements CameraModule, PhotoController,
             String mode = value.substring(0, 3);
             mHighSpeedRecordingMode = mode.equals("hsr");
             mHighSpeedCaptureRate = Integer.parseInt(value.substring(3));
+        }
+    }
+
+    private boolean startMediaRecorder() {
+        if (mUnsupportedResolution == true ) {
+            Log.v(TAG, "Unsupported Resolution according to target");
+            mStartRecPending = false;
+            mIsRecordingVideo = false;
+            return false;
+        }
+        if (mMediaRecorder == null) {
+            Log.e(TAG, "Fail to initialize media recorder");
+            mStartRecPending = false;
+            mIsRecordingVideo = false;
+            return false;
+        }
+        requestAudioFocus();
+        try {
+            mMediaRecorder.start(); // Recording is now started
+        } catch (RuntimeException e) {
+            Toast.makeText(mActivity,"Could not start media recorder.\n " +
+                    "Can't start video recording.", Toast.LENGTH_LONG).show();
+            releaseMediaRecorder();
+            releaseAudioFocus();
+            mStartRecPending = false;
+            mIsRecordingVideo = false;
+            return false;
+        }
+        return true;
+    }
+
+    public void startMediaRecording() {
+        if (!startMediaRecorder()) {
+            mUI.showUIafterRecording();
+            releaseMediaRecorder();
+            mFrameProcessor.setVideoOutputSurface(null);
+            restartSession(true);
         }
     }
 
@@ -5135,7 +5172,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (bitmap != null) {
             // MetadataRetriever already rotates the thumbnail. We should rotate
             // it to match the UI orientation (and mirror if it is front-facing camera).
-            Camera.CameraInfo[] info = CameraHolder.instance().getCameraInfo();
             boolean mirror = mPostProcessor.isSelfieMirrorOn();
             bitmap = CameraUtil.rotateAndMirror(bitmap, 0, mirror);
         }
