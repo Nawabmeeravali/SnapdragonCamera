@@ -155,6 +155,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_VIDEO_HDR_VALUE = "pref_camera2_video_hdr_key";
     public static final String KEY_HDR_MODE = "pref_camera2_hdr_mode_key";
+    public static final String KEY_ABORT_CAPTURES = "pref_camera2_abort_captures_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
     public static final String KEY_ZOOM = "pref_camera2_zoom_key";
     public static final String KEY_QCFA = "pref_camera2_qcfa_key";
