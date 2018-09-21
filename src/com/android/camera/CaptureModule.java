@@ -2292,7 +2292,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                                         orientation, exif, mOnMediaSavedListener, mContentResolver, "jpeg");
                                             } else {
                                                 mActivity.getMediaSaveService().addImage(bytes, title, date,
-                                                        null, width, height, orientation, null,
+                                                        null, width, height, orientation, exif,
                                                         mOnMediaSavedListener, mContentResolver, "jpeg");
                                             }
 
@@ -2375,7 +2375,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         int orientation = Exif.getOrientation(exif);
 
                         mActivity.getMediaSaveService().addImage(bytes, title, date,
-                                null, image.getWidth(), image.getHeight(), orientation, null,
+                                null, image.getWidth(), image.getHeight(), orientation, exif,
                                 mOnMediaSavedListener, mContentResolver, "jpeg");
 
                         mActivity.updateThumbnail(bytes);
@@ -2630,6 +2630,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         } else {
             Log.d(TAG, "no location - getRecordLocation: " + getRecordLocation());
         }
+
         builder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.getJpegRotation(id, mOrientation));
         builder.set(CaptureRequest.JPEG_THUMBNAIL_SIZE, mPictureThumbSize);
         builder.set(CaptureRequest.JPEG_THUMBNAIL_QUALITY, (byte)80);

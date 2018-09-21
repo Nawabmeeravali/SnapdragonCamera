@@ -1191,7 +1191,7 @@ public class PostProcessor{
                     } else {
                         mActivity.getMediaSaveService().addImage(
                                 bytes, title, date, null, image.getCropRect().width(), image.getCropRect().height(),
-                                orientation, null, mController.getMediaSavedListener(), mActivity.getContentResolver(), "jpeg");
+                                orientation, exif, mController.getMediaSavedListener(), mActivity.getContentResolver(), "jpeg");
                         mController.updateThumbnailJpegData(bytes);
                         image.close();
                     }
