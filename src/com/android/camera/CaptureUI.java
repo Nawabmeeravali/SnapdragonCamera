@@ -1273,6 +1273,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         }
     }
 
+    public boolean isShutterEnabled() {
+        return mShutterButton.isEnabled();
+    }
+
     /**
      * Enables or disables the video button.
      */
