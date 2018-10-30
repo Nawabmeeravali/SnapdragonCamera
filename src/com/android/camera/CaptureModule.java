@@ -2747,6 +2747,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         closeCamera();
         resetAudioMute();
+        mUI.releaseSoundPool();
         mUI.showPreviewCover();
         mFirstPreviewLoaded = false;
         stopBackgroundThread();
@@ -2923,6 +2924,14 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     }
 
+    private void loadSoundPoolResource() {
+        String timer = mSettingsManager.getValue(SettingsManager.KEY_TIMER);
+        int seconds = Integer.parseInt(timer);
+        if (seconds > 0) {
+            mUI.initCountDownView();
+        }
+    }
+
     @Override
     public void onResumeAfterSuper() {
         Log.d(TAG, "onResume " + getCameraMode());
@@ -2939,6 +2948,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         setDisplayOrientation();
         startBackgroundThread();
         openProcessors();
+        loadSoundPoolResource();
         Message msg = Message.obtain();
         msg.what = OPEN_CAMERA;
         if (isBackCamera()) {
