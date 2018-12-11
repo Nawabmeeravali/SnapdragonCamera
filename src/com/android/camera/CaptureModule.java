@@ -1346,7 +1346,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         mPreviewRequestBuilder[id].setTag(id);
         try {
             if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
-                setRepeatingBurstForZSL(BAYER_ID);
+                setRepeatingBurstForZSL(id);
             } else {
                 mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                         .build(), mCaptureCallback, mCameraHandler);
@@ -1704,7 +1704,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[id] = STATE_WAITING_TOUCH_FOCUS;
             mCaptureSession[id].capture(builder.build(), mCaptureCallback, mCameraHandler);
             setAFModeToPreview(id, mControlAFMode);
-            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, mCameraId[id]);
+            Message message = mCameraHandler.obtainMessage(CANCEL_TOUCH_FOCUS, id, 0, mCameraId[id]);
             mCameraHandler.sendMessageDelayed(message, CANCEL_TOUCH_FOCUS_DELAY);
         } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
