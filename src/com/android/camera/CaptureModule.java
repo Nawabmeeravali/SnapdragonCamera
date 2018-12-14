@@ -1509,7 +1509,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                         if(takeZSLPicture(BAYER_ID)) {
                             return;
                         }
-                        parallelLockAFAndPreCapture(BAYER_ID);
+                        if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
+                            captureStillPicture(BAYER_ID);
+                        } else {
+                            parallelLockAFAndPreCapture(BAYER_ID);
+                        }
                         break;
                     case MONO_MODE:
                         lockFocus(MONO_ID);
@@ -1589,7 +1593,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mCaptureSession[id].stopRepeating();
                     applyFlash(mPreviewRequestBuilder[id], id);
                     if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
-                        setRepeatingBurstForZSL(BAYER_ID);
+                        setRepeatingBurstForZSL(id);
                     } else {
                         mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                                 .build(), mCaptureCallback, mCameraHandler);
@@ -1926,7 +1930,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                 public void onCaptureSequenceCompleted(CameraCaptureSession session, int
                         sequenceId, long frameNumber) {
                     Log.d(TAG, "captureStillPictureForCommon onCaptureSequenceCompleted: " + id);
-                    unlockFocus(id);
+                    if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
+                        enableShutterAndVideoOnUiThread(id);
+                    } else {
+                        unlockFocus(id);
+                    }
                 }
             }, mCaptureCallbackHandler);
         }
@@ -2243,20 +2251,24 @@ public class CaptureModule implements CameraModule, PhotoController,
             applySettingsForUnlockExposure(mPreviewRequestBuilder[id], id);
             setAFModeToPreview(id, mControlAFMode);
             mTakingPicture[id] = false;
-            if (id == getMainCameraId()) {
-                mActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mUI.stopSelfieFlash();
-                        if (!mIsSupportedQcfa && !mBokehEnabled) {
-                            mUI.enableShutter(true);
-                        }
-                        mUI.enableVideo(true);
-                    }
-                });
-            }
+            enableShutterAndVideoOnUiThread(id);
         } catch (NullPointerException | IllegalStateException | CameraAccessException e) {
             Log.w(TAG, "Session is already closed");
+        }
+    }
+
+    private void enableShutterAndVideoOnUiThread(int id) {
+        if (id == getMainCameraId()) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mUI.stopSelfieFlash();
+                    if (!mIsSupportedQcfa && !mBokehEnabled) {
+                        mUI.enableShutter(true);
+                    }
+                    mUI.enableVideo(true);
+                }
+            });
         }
     }
 
