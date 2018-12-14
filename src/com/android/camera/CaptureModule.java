@@ -4647,7 +4647,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     ((CameraConstrainedHighSpeedCaptureSession) session).setRepeatingBurst(list
                             , mCaptureCallback, mCameraHandler);
                 } else {
-                    if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
+                    if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE
+                            && !mIsRecordingVideo) {
                         setRepeatingBurstForZSL(id);
                     } else {
                         mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
