@@ -523,6 +523,8 @@ public class PostProcessor{
                 }
 
                 builder.addTarget(mZSLReprocessImageReader.getSurface());
+                builder.addTarget(mController.getPreviewSurfaceForSession(
+                        mController.getMainCameraId()));
                 try {
                     if (!fusionStatus) {
                         mImageWriter.queueInputImage(image);
