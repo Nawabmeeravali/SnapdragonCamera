@@ -854,7 +854,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Log.d(TAG, "STATE_WAITING_AE_LOCK id: " + id + " afState: " + afState + " aeState:" + aeState);
                 if ((afState != null &&
                         (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                        CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState)) &&
+                        CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState ||
+                        (mSettingsManager.isFixedFocus(id) &&
+                                afState == CaptureResult.CONTROL_AF_STATE_INACTIVE))) &&
                         (aeState != null || aeState == CaptureResult.CONTROL_AE_STATE_LOCKED)) {
                     checkAfAeStatesAndCapture(id);
                 }
@@ -2257,7 +2259,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             mTakingPicture[id] = false;
             enableShutterAndVideoOnUiThread(id);
         } catch (NullPointerException | IllegalStateException | CameraAccessException e) {
-            Log.w(TAG, "Session is already closed");
+            Log.w(TAG, "unlock exception occurred");
+            e.printStackTrace();
         }
     }
 
