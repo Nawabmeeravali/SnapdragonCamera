@@ -36,7 +36,6 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -70,7 +69,6 @@ import android.os.Debug;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.Bundle;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -91,7 +89,6 @@ import android.graphics.Paint;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.AttributeSet;
-import android.graphics.Bitmap;
 
 import com.android.camera.exif.ExifInterface;
 import com.android.camera.imageprocessor.filter.BlurbusterFilter;
@@ -134,7 +131,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.lang.reflect.Method;
@@ -366,6 +362,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mQuickCapture;
     private byte[] mJpegImageData;
     private boolean mSaveRaw = false;
+    private long[] mBufferLostFrameNumbers = new long[5];
+    private int mBufferLostIndex = 0;
 
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -665,7 +663,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
             showBokehStatusMessage(id, result);
             processCaptureResult(result);
-            if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
+            if (isBufferLostFrame(result.getFrameNumber())) {
+                return;
+            } else if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
                 boolean zsl = false;
                 List<CaptureResult> resultList = result.getPartialResults();
                 for (CaptureResult r : resultList) {
@@ -684,7 +684,33 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mPostProcessor.onMetaAvailable(result);
             }
         }
+
+        @Override
+        public void onCaptureBufferLost(CameraCaptureSession session, CaptureRequest request,
+                                        Surface target, long frameNumber) {
+            super.onCaptureBufferLost(session, request, target, frameNumber);
+            int id = (int) request.getTag();
+            if (target == mImageReader[id].getSurface()) {
+                mBufferLostFrameNumbers[mBufferLostIndex] = frameNumber;
+                mBufferLostIndex = ++mBufferLostIndex % mBufferLostFrameNumbers.length;
+            }
+        }
     };
+
+    private boolean isBufferLostFrame(long frameNumber) {
+        for (long frame : mBufferLostFrameNumbers) {
+            if (frame == frameNumber) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void clearBufferLostFrames() {
+        for (int i = 0; i < mBufferLostFrameNumbers.length; i++) {
+            mBufferLostFrameNumbers[i] = -1;
+        }
+    }
 
     private void showBokehStatusMessage(int id, CaptureResult partialResult) {
         if (!mBokehEnabled || partialResult == null) {
@@ -803,6 +829,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             int id = Integer.parseInt(cameraDevice.getId());
             Log.d(TAG, "onClosed " + id);
             mCameraDevice[id] = null;
+            clearBufferLostFrames();
             mCameraOpenCloseLock.release();
             mCamerasOpened = false;
         }
