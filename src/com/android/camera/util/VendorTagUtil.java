@@ -52,7 +52,9 @@ public class VendorTagUtil {
     private static CaptureRequest.Key<Long> ISO_EXP =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.iso_exp_priority.use_iso_exp_priority",
                     Long.class);
-
+    private static CaptureRequest.Key<Integer> USE_ISO_VALUE =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.iso_exp_priority.use_iso_value",
+                    Integer.class);
     private static CaptureRequest.Key<Integer> WB_COLOR_TEMPERATURE =
             new CaptureRequest.Key<>("org.codeaurora.qcamera3.manualWB.color_temperature",
                     Integer.class);
@@ -176,5 +178,15 @@ public class VendorTagUtil {
         if (isPartialWBModeSupported(builder)) {
             builder.set(PARTIAL_MANUAL_WB_MODE, MANUAL_WB_DISABLE_MODE);
         }
+    }
+
+    public static void setUseIsoValues(CaptureRequest.Builder builder, long value) {
+        if (isUseIsoValueSupported(builder)) {
+            builder.set(ISO_EXP, value);
+        }
+    }
+
+    private static boolean isUseIsoValueSupported(CaptureRequest.Builder builder) {
+        return isSupported(builder, ISO_EXP);
     }
 }
