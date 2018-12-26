@@ -643,6 +643,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 boolean zsl = false;
                 List<CaptureResult> resultList = result.getPartialResults();
                 for (CaptureResult r : resultList) {
+                    if (mImageReader[id] == null) {
+                        break;
+                    }
                     if (r.getRequest().containsTarget(mImageReader[id].getSurface())) {
                         zsl = true;
                         break;
