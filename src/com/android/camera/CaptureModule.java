@@ -2070,13 +2070,14 @@ public class CaptureModule implements CameraModule, PhotoController,
                 } else {
                     if ((imageFormat == ImageFormat.YUV_420_888 || imageFormat == ImageFormat.PRIVATE)
                             && i == getMainCameraId()) {
-                        if(mPostProcessor.isZSLEnabled()) {
-                            mImageReader[i] = ImageReader.newInstance(mSupportedMaxPictureSize.getWidth(),
-                                    mSupportedMaxPictureSize.getHeight(), imageFormat, mPostProcessor.getMaxRequiredImageNum());
-                        } else {
-                            mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
-                                    mPictureSize.getHeight(), imageFormat, mPostProcessor.getMaxRequiredImageNum());
+                        Size pictureSize = mPictureSize;
+                        if (mPostProcessor.isZSLEnabled() &&
+                                mPictureSize.getWidth() * mPictureSize.getHeight() < 2592 * 1944) {
+                            // if picture size < 5M , fix to 5M
+                            pictureSize = new Size(2592, 1944);
                         }
+                        mImageReader[i] = ImageReader.newInstance(pictureSize.getWidth(),
+                                pictureSize.getHeight(), imageFormat, mPostProcessor.getMaxRequiredImageNum());
                         if (mSaveRaw) {
                             mRawImageReader[i] = ImageReader.newInstance(mSupportedRawPictureSize.getWidth(),
                                     mSupportedRawPictureSize.getHeight(), ImageFormat.RAW10, mPostProcessor.getMaxRequiredImageNum()+1);
