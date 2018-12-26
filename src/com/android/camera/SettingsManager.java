@@ -188,11 +188,11 @@ public class SettingsManager implements ListMenu.SettingsListener {
         KEY_ISO_INDEX.put("auto", 0);
         KEY_ISO_INDEX.put("deblur", 1);
         KEY_ISO_INDEX.put("100", 2);
-        KEY_ISO_INDEX.put("100", 2);
         KEY_ISO_INDEX.put("200", 3);
         KEY_ISO_INDEX.put("400", 4);
         KEY_ISO_INDEX.put("800", 5);
         KEY_ISO_INDEX.put("1600", 6);
+        KEY_ISO_INDEX.put("3200", 7);
     }
 
     private SettingsManager(Context context) {
@@ -1350,19 +1350,31 @@ public class SettingsManager implements ListMenu.SettingsListener {
     }
 
     private List<String> getSupportedIso(int cameraId) {
+        int maxIso = 0;
         Range<Integer> range = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .SENSOR_INFO_SENSITIVITY_RANGE);
+        if (range != null) {
+            maxIso = range.getUpper();
+        }
+        int[] isoAvailable = mCharacteristics.get(cameraId).get(
+                CaptureModule.ISO_AVAILABLE_MODES);
         List<String> supportedIso = new ArrayList<>();
         supportedIso.add("auto");
 
-        if (range != null) {
-            int max = range.getUpper();
-            int value = 50;
-            while (value <= max) {
-                if (range.contains(value)) {
-                    supportedIso.add("" + value);
+        if (isoAvailable != null) {
+            for (int iso : isoAvailable) {
+                for (String key : KEY_ISO_INDEX.keySet()) {
+                    if ( KEY_ISO_INDEX.get(key).equals(iso)) {
+                        if (key.equals("auto") || key.equals("deblur")) {
+                            supportedIso.add(key);
+                        } else {
+                            int isoInt = Integer.parseInt(key);
+                            if (isoInt <= maxIso) {
+                                supportedIso.add(key);
+                            }
+                        }
+                    }
                 }
-                value += 50;
             }
         } else {
             Log.w(TAG, "Supported ISO range is null.");
