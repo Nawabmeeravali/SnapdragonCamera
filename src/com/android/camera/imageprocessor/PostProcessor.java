@@ -584,6 +584,7 @@ public class PostProcessor{
         PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();
         String title = (name == null) ? null : name.title;
         mActivity.getMediaSaveService().addRawImage(data, title, "raw");
+        image.close();
     }
 
     enum STATUS {
