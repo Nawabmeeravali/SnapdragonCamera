@@ -1235,5 +1235,12 @@
     <string name="pref_camera2_exposure_metering_entryvalue_center_weighted" translatable="false">1</string>
     <string name="pref_camera2_exposure_metering_entryvalue_spot_meteting" translatable="false">2</string>
 
+    <string name="pref_camera2_hdr_mode_title" translatable="true">HDR Mode</string>
+    <string name="pref_camera2_hdr_mode_default" translatable="false">0</string>
+    <string name="pref_camera2_hdr_mode_entry_multi_frame" translatable="true">Multi-frame</string>
+    <string name="pref_camera2_hdr_mode_entry_sensor" translatable="true">Sensor</string>
+    <string name="pref_camera2_hdr_mode_entry_value_multi_frame" translatable="false">0</string>
+    <string name="pref_camera2_hdr_mode_entry_value_sensor" translatable="false">1</string>
+
 </resources>
 

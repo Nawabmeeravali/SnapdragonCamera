@@ -150,6 +150,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_AUTO_HDR = "pref_camera2_auto_hdr_key";
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_VIDEO_HDR_VALUE = "pref_camera2_video_hdr_key";
+    public static final String KEY_HDR_MODE = "pref_camera2_hdr_mode_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
     public static final String KEY_ZOOM = "pref_camera2_zoom_key";
     public static final String KEY_QCFA = "pref_camera2_qcfa_key";
@@ -685,6 +686,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference zoom = mPreferenceGroup.findPreference(KEY_ZOOM);
         ListPreference qcfa = mPreferenceGroup.findPreference(KEY_QCFA);
         ListPreference bsgc = mPreferenceGroup.findPreference(KEY_BSGC_DETECTION);
+        ListPreference hdr_mode = mPreferenceGroup.findPreference(KEY_HDR_MODE);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -834,6 +836,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
             if (filterUnsupportedOptions(zoom,
                     getSupportedZoomLevel(cameraId))) {
                 mFilteredKeys.add(zoom.getKey());
+            }
+        }
+
+        if (hdr_mode != null) {
+            if (!isZZHDRSupported()) {
+                removePreference(mPreferenceGroup,KEY_HDR_MODE);
             }
         }
     }

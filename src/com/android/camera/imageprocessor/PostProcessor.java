@@ -671,8 +671,9 @@ public class PostProcessor{
                 || "enable".equals(
                          SettingsManager.getInstance().getValue(SettingsManager.KEY_AUTO_HDR))
                 || SettingsManager.getInstance().isCamera2HDRSupport()
-                || "18".equals(SettingsManager.getInstance().getValue(
-                                  SettingsManager.KEY_SCENE_MODE))
+                || ("18".equals(SettingsManager.getInstance().getValue(
+                                  SettingsManager.KEY_SCENE_MODE)) &&
+                   !"1".equals(SettingsManager.getInstance().getValue(SettingsManager.KEY_HDR_MODE)))
                 || mController.getCameraMode() == CaptureModule.DUAL_MODE
                 || isSupportedQcfa) {
             mUseZSL = false;
