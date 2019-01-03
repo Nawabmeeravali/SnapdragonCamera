@@ -202,8 +202,6 @@ public class CaptureModule implements CameraModule, PhotoController,
      * Camera state: Focus and exposure has been locked and converged.
      */
     private static final int STATE_AF_AE_LOCKED = 6;
-    private static final int STATE_WAITING_AF_LOCKING = 7;
-    private static final int STATE_WAITING_AF_PRECAPTURE_LOCK = 8;
     private static final String TAG = "SnapCam_CaptureModule";
 
     // Used for check memory status for longshot mode
@@ -851,12 +849,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 Log.d(TAG, "STATE_WAITING_AE_LOCK id: " + id + " afState: " + afState + " aeState:" + aeState);
-                if ((afState != null &&
-                        (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                        CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState ||
-                        (mSettingsManager.isFixedFocus(id) &&
-                                afState == CaptureResult.CONTROL_AF_STATE_INACTIVE))) &&
-                        (aeState != null || aeState == CaptureResult.CONTROL_AE_STATE_LOCKED)) {
+                if (aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_LOCKED) {
                     checkAfAeStatesAndCapture(id);
                 }
                 break;
@@ -871,30 +864,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 Log.d(TAG, "STATE_WAITING_TOUCH_FOCUS id: " + id + " afState:" + afState + " aeState:" + aeState);
-                break;
-            }
-            case STATE_WAITING_AF_LOCKING: {
-                parallelLockAFAndPreCapture(getMainCameraId());
-                break;
-            }
-            case STATE_WAITING_AF_PRECAPTURE_LOCK: {
-                Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                Log.d(TAG, "STATE_WAITING_AF_PRECAPTURE_LOCK id: " + id + " afState: " + afState +
-                        " aeState:" + aeState);
-
-                if ((aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED)) {
-                    if (isFlashOn(id)) {
-                        // if flash is on and AE state is CONVERGED then lock AE
-                        lockExposure(id);
-                        break;
-                    }
-                }
-
-                if (aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                        (aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED)) {
-                    lockExposure(id);
-                }
                 break;
             }
         }
@@ -1516,7 +1485,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
                             captureStillPicture(BAYER_ID);
                         } else {
-                            parallelLockAFAndPreCapture(BAYER_ID);
+                            lockFocus(BAYER_ID);
                         }
                         break;
                     case MONO_MODE:
@@ -1575,61 +1544,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     public boolean isLongShotActive() {
         return mLongshotActive;
-    }
-
-    private void parallelLockAFAndPreCapture(int id) {
-        if (mActivity == null || mCameraDevice[id] == null
-                || !checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
-            mUI.enableShutter(true);
-            warningToast("Camera is not ready yet to take a picture.");
-            return;
-        }
-        Log.d(TAG, "parallelLockAFAndPreCapture " + id);
-        try {
-            // start repeating request to get AF/AE state updates
-            // for mono when mono preview is off.
-            if(id == MONO_ID && !canStartMonoPreview()) {
-                mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
-                        .build(), mCaptureCallback, mCameraHandler);
-            } else {
-                // for longshot flash, need to re-configure the preview flash mode.
-                if (mLongshotActive && isFlashOn(id)) {
-                    mCaptureSession[id].stopRepeating();
-                    applyFlash(mPreviewRequestBuilder[id], id);
-                    if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
-                        setRepeatingBurstForZSL(id);
-                    } else {
-                        mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
-                                .build(), mCaptureCallback, mCameraHandler);
-                    }
-                }
-            }
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-
-        mTakingPicture[id] = true;
-        if (mState[id] == STATE_WAITING_TOUCH_FOCUS) {
-            mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[id]);
-            mState[id] = STATE_WAITING_AF_LOCKING;
-            mLockRequestHashCode[id] = 0;
-            return;
-        }
-
-        try {
-            mState[id] = STATE_WAITING_AF_PRECAPTURE_LOCK;
-            CaptureRequest.Builder builder = getRequestBuilder(id);
-            builder.setTag(id);
-            addPreviewSurface(builder, null, id);
-            // lock AF and Precapture
-            applySettingsForLockAndPrecapture(builder, id);
-            CaptureRequest request = builder.build();
-            mLockRequestHashCode[id] = request.hashCode();
-            mCaptureSession[id].capture(request, mCaptureCallback, mCameraHandler);
-        } catch (CameraAccessException | IllegalStateException e) {
-            e.printStackTrace();
-        }
-
     }
 
     /**
@@ -2432,16 +2346,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         // For long shot, torch mode is used
         if (!mLongshotActive)
             applyFlash(builder, id);
-    }
-
-    private void applySettingsForLockAndPrecapture(CaptureRequest.Builder builder, int id) {
-        builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-        applyAFRegions(builder, id);
-        applyAERegions(builder, id);
-        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-        applyFlash(builder, id);
-        applyCommonSettings(builder, id);
     }
 
     private void applySettingsForLockExposure(CaptureRequest.Builder builder, int id) {
