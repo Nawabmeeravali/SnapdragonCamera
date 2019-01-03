@@ -523,6 +523,8 @@ public class PostProcessor{
                 }
 
                 builder.addTarget(mZSLReprocessImageReader.getSurface());
+                builder.addTarget(mController.getPreviewSurfaceForSession(
+                        mController.getMainCameraId()));
                 try {
                     if (!fusionStatus) {
                         mImageWriter.queueInputImage(image);
@@ -582,6 +584,7 @@ public class PostProcessor{
         PhotoModule.NamedImages.NamedEntity name = mNamedImages.getNextNameEntity();
         String title = (name == null) ? null : name.title;
         mActivity.getMediaSaveService().addRawImage(data, title, "raw");
+        image.close();
     }
 
     enum STATUS {

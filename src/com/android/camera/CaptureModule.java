@@ -643,6 +643,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 boolean zsl = false;
                 List<CaptureResult> resultList = result.getPartialResults();
                 for (CaptureResult r : resultList) {
+                    if (mImageReader[id] == null) {
+                        break;
+                    }
                     if (r.getRequest().containsTarget(mImageReader[id].getSurface())) {
                         zsl = true;
                         break;
@@ -1509,7 +1512,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                         if(takeZSLPicture(BAYER_ID)) {
                             return;
                         }
-                        parallelLockAFAndPreCapture(BAYER_ID);
+                        if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
+                            captureStillPicture(BAYER_ID);
+                        } else {
+                            parallelLockAFAndPreCapture(BAYER_ID);
+                        }
                         break;
                     case MONO_MODE:
                         lockFocus(MONO_ID);
@@ -1589,7 +1596,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mCaptureSession[id].stopRepeating();
                     applyFlash(mPreviewRequestBuilder[id], id);
                     if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
-                        setRepeatingBurstForZSL(BAYER_ID);
+                        setRepeatingBurstForZSL(id);
                     } else {
                         mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
                                 .build(), mCaptureCallback, mCameraHandler);
@@ -1926,7 +1933,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                 public void onCaptureSequenceCompleted(CameraCaptureSession session, int
                         sequenceId, long frameNumber) {
                     Log.d(TAG, "captureStillPictureForCommon onCaptureSequenceCompleted: " + id);
-                    unlockFocus(id);
+                    if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
+                        enableShutterAndVideoOnUiThread(id);
+                    } else {
+                        unlockFocus(id);
+                    }
                 }
             }, mCaptureCallbackHandler);
         }
@@ -2059,16 +2070,17 @@ public class CaptureModule implements CameraModule, PhotoController,
                 } else {
                     if ((imageFormat == ImageFormat.YUV_420_888 || imageFormat == ImageFormat.PRIVATE)
                             && i == getMainCameraId()) {
-                        if(mPostProcessor.isZSLEnabled()) {
-                            mImageReader[i] = ImageReader.newInstance(mSupportedMaxPictureSize.getWidth(),
-                                    mSupportedMaxPictureSize.getHeight(), imageFormat, mPostProcessor.getMaxRequiredImageNum());
-                        } else {
-                            mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
-                                    mPictureSize.getHeight(), imageFormat, mPostProcessor.getMaxRequiredImageNum());
+                        Size pictureSize = mPictureSize;
+                        if (mPostProcessor.isZSLEnabled() &&
+                                mPictureSize.getWidth() * mPictureSize.getHeight() < 2592 * 1944) {
+                            // if picture size < 5M , fix to 5M
+                            pictureSize = new Size(2592, 1944);
                         }
+                        mImageReader[i] = ImageReader.newInstance(pictureSize.getWidth(),
+                                pictureSize.getHeight(), imageFormat, mPostProcessor.getMaxRequiredImageNum());
                         if (mSaveRaw) {
                             mRawImageReader[i] = ImageReader.newInstance(mSupportedRawPictureSize.getWidth(),
-                                    mSupportedRawPictureSize.getHeight(), ImageFormat.RAW10, mPostProcessor.getMaxRequiredImageNum());
+                                    mSupportedRawPictureSize.getHeight(), ImageFormat.RAW10, mPostProcessor.getMaxRequiredImageNum()+1);
                             mPostProcessor.setRawImageReader(mRawImageReader[i]);
                         }
                         mImageReader[i].setOnImageAvailableListener(mPostProcessor.getImageHandler(), mImageAvailableHandler);
@@ -2243,20 +2255,24 @@ public class CaptureModule implements CameraModule, PhotoController,
             applySettingsForUnlockExposure(mPreviewRequestBuilder[id], id);
             setAFModeToPreview(id, mControlAFMode);
             mTakingPicture[id] = false;
-            if (id == getMainCameraId()) {
-                mActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mUI.stopSelfieFlash();
-                        if (!mIsSupportedQcfa && !mBokehEnabled) {
-                            mUI.enableShutter(true);
-                        }
-                        mUI.enableVideo(true);
-                    }
-                });
-            }
+            enableShutterAndVideoOnUiThread(id);
         } catch (NullPointerException | IllegalStateException | CameraAccessException e) {
             Log.w(TAG, "Session is already closed");
+        }
+    }
+
+    private void enableShutterAndVideoOnUiThread(int id) {
+        if (id == getMainCameraId()) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mUI.stopSelfieFlash();
+                    if (!mIsSupportedQcfa && !mBokehEnabled) {
+                        mUI.enableShutter(true);
+                    }
+                    mUI.enableVideo(true);
+                }
+            });
         }
     }
 
@@ -4647,7 +4663,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     ((CameraConstrainedHighSpeedCaptureSession) session).setRepeatingBurst(list
                             , mCaptureCallback, mCameraHandler);
                 } else {
-                    if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
+                    if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE
+                            && !mIsRecordingVideo) {
                         setRepeatingBurstForZSL(id);
                     } else {
                         mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
