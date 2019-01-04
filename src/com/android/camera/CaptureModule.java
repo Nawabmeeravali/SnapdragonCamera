@@ -2494,6 +2494,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void applyCommonSettings(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
+        applyAfModes(builder);
         applyFaceDetection(builder);
         applyWhiteBalance(builder);
         applyExposure(builder);
@@ -4550,6 +4551,21 @@ public class CaptureModule implements CameraModule, PhotoController,
                 e.printStackTrace();
             }
         }
+    }
+
+    private void applyAfModes(CaptureRequest.Builder request) {
+        if (getDevAfMode() != -1) {
+            request.set(CaptureRequest.CONTROL_AF_MODE, getDevAfMode());
+        }
+    }
+
+    private int getDevAfMode() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_AF_MODE);
+        int intValue = -1;
+        if (value != null) {
+            intValue = Integer.parseInt(value);
+        }
+        return intValue;
     }
 
     private void enableBokeh(CaptureRequest.Builder request) {
