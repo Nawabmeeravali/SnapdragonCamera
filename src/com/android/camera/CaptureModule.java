@@ -291,6 +291,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             "org.codeaurora.qcamera3.sharpness.strength", Integer.class);
     public static final CaptureRequest.Key<Integer> exposure_metering = new CaptureRequest.Key<>(
             "org.codeaurora.qcamera3.exposure_metering.exposure_metering_mode", Integer.class);
+    public static final CaptureRequest.Key<Byte> earlyPCR =
+            new CaptureRequest.Key<>("org.quic.camera.EarlyPCRenable.EarlyPCRenable", byte.class);
 
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
@@ -2510,6 +2512,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyHistogram(builder);
         applySharpnessControlModes(builder);
         applyExposureMeteringModes(builder);
+        applyEarlyPCR(builder);
         enableBokeh(builder);
     }
 
@@ -3827,6 +3830,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyFaceDetection(builder);
         applyZoom(builder, cameraId);
         applyVideoHDR(builder);
+        applyEarlyPCR(builder);
     }
 
     private void applyVideoHDR(CaptureRequest.Builder builder) {
@@ -4576,6 +4580,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (value != null) {
             int intValue = Integer.parseInt(value);
             request.set(CaptureModule.exposure_metering, intValue);
+        }
+    }
+
+    private void applyEarlyPCR(CaptureRequest.Builder request) {
+        try {
+            request.set(CaptureModule.earlyPCR, (byte) (mHighSpeedCapture ? 0x00 : 0x01));
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
         }
     }
 
