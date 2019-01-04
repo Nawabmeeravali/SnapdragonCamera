@@ -375,6 +375,15 @@
             android:title="@string/pref_camera2_bsgc_title" />
 
         <ListPreference
+            android:defaultValue="@string/pref_camera_denoise_default"
+            android:entries="@array/pref_camera_denoise_entries"
+            android:entryValues="@array/pref_camera_denoise_entryvalues"
+            android:key="pref_camera2_denoise_key"
+            android:layout="@layout/preference"
+            android:summary="%s"
+            android:title="@string/pref_camera_denoise_title" />
+
+        <ListPreference
             android:defaultValue="@string/pref_camera2_switch_camera_default"
             android:key="pref_camera2_switch_camera_key"
             android:layout="@layout/preference"

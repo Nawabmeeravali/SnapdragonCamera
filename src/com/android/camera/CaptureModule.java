@@ -2502,6 +2502,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyInstantAEC(builder);
         applySaturationLevel(builder);
         applyAntiBandingLevel(builder);
+        applyDenoise(builder);
         applyHistogram(builder);
         enableBokeh(builder);
     }
@@ -4518,6 +4519,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (value != null) {
             int intValue = Integer.parseInt(value);
             request.set(CaptureRequest.CONTROL_AE_ANTIBANDING_MODE, intValue);
+        }
+    }
+
+    private void applyDenoise(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_DENOISE);
+        if (value != null && value.equals("denoise-off")) {
+            request.set(CaptureRequest.NOISE_REDUCTION_MODE,
+                    CameraMetadata.NOISE_REDUCTION_MODE_OFF);
         }
     }
 
