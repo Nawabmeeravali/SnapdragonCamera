@@ -289,6 +289,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             new CaptureResult.Key<>("org.codeaurora.qcamera3.bokeh.status", Integer.class);
     public static final CaptureRequest.Key<Integer> sharpness_control = new CaptureRequest.Key<>(
             "org.codeaurora.qcamera3.sharpness.strength", Integer.class);
+    public static final CaptureRequest.Key<Integer> exposure_metering = new CaptureRequest.Key<>(
+            "org.codeaurora.qcamera3.exposure_metering.exposure_metering_mode", Integer.class);
 
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
@@ -2507,6 +2509,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyAntiBandingLevel(builder);
         applyHistogram(builder);
         applySharpnessControlModes(builder);
+        applyExposureMeteringModes(builder);
         enableBokeh(builder);
     }
 
@@ -4566,6 +4569,14 @@ public class CaptureModule implements CameraModule, PhotoController,
             intValue = Integer.parseInt(value);
         }
         return intValue;
+    }
+
+    private void applyExposureMeteringModes(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_EXPOSURE_METERING_MODE);
+        if (value != null) {
+            int intValue = Integer.parseInt(value);
+            request.set(CaptureModule.exposure_metering, intValue);
+        }
     }
 
     private void enableBokeh(CaptureRequest.Builder request) {
