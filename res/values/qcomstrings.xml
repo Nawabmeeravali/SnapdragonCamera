@@ -1242,5 +1242,9 @@
     <string name="pref_camera2_hdr_mode_entry_value_multi_frame" translatable="false">0</string>
     <string name="pref_camera2_hdr_mode_entry_value_sensor" translatable="false">1</string>
 
+    <string name="pref_camera2_picture_format_title">Picture Format</string>
+    <string name="pref_camera2_picture_format_default">0</string>
+    <string name="pref_camera2_picture_format_entry_0">JPEG</string>
+    <string name="pref_camera2_picture_format_entry_1">HEIF</string>
 </resources>
 

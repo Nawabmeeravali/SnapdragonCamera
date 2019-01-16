@@ -99,6 +99,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final int SCENE_MODE_TRACKINGFOCUS_INT = SCENE_MODE_CUSTOM_START + 8;
     public static final int SCENE_MODE_PROMODE_INT = SCENE_MODE_CUSTOM_START + 9;
     public static final int SCENE_MODE_BOKEH_INT = SCENE_MODE_CUSTOM_START + 10;
+    public static final int JPEG_FORMAT = 0;
+    public static final int HEIF_FORMAT = 1;
     public static final String SCENE_MODE_DUAL_STRING = "100";
     public static final String SCENE_MODE_BOKEH_STRING = "110";
     public static final String KEY_CAMERA_SAVEPATH = "pref_camera2_savepath_key";
@@ -121,6 +123,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_CAMERA_ID = "pref_camera2_id_key";
     public static final String KEY_SWITCH_CAMERA = "pref_camera2_switch_camera_key";
     public static final String KEY_PICTURE_SIZE = "pref_camera2_picturesize_key";
+    public static final String KEY_PICTURE_FORMAT = "pref_camera2_picture_format_key";
     public static final String KEY_ISO = "pref_camera2_iso_key";
     public static final String KEY_EXPOSURE = "pref_camera2_exposure_key";
     public static final String KEY_TIMER = "pref_camera2_timer_key";
@@ -1706,6 +1709,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public boolean isCamera2HDRSupport(){
         String value = getValue(KEY_HDR);
         return value != null && value.equals("enable");
+    }
+
+    public int getSavePictureFormat() {
+        String value = getValue(SettingsManager.KEY_PICTURE_FORMAT);
+        if (value == null) return 0;
+        return Integer.valueOf(value);
     }
 
     public boolean isZSLInHALEnabled(){

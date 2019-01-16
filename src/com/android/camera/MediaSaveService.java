@@ -50,6 +50,8 @@ import org.codeaurora.snapcam.filter.GImage;
 import com.adobe.xmp.XMPException;
 import com.adobe.xmp.XMPMeta;
 
+import androidx.heifwriter.HeifWriter;
+
 
 /*
  * Service for saving images in the background thread.
@@ -163,6 +165,19 @@ public class MediaSaveService extends Service {
         t.execute();
     }
 
+    public void addHEIFImage(String path,String title,long date , Location loc,
+                             int width, int height, int orientation, ExifInterface exif,
+                             ContentResolver resolver, OnMediaSavedListener listener,
+                             int qualitiy, String pictureFormat) {
+        if (isQueueFull()) {
+            Log.e(TAG, "Cannot add image when the queue is full");
+            return;
+        }
+        HEIFImageSaveTask t = new HEIFImageSaveTask(path,title,date, loc, width, height, orientation,
+                exif, resolver, listener, qualitiy, pictureFormat);
+
+        t.execute();
+    }
     public void addXmpImage(byte[] mainImage, GImage bayer, GDepth gDepth,
                                    String title, long date, Location loc, int width, int height,
                                    int orientation, ExifInterface exif,
@@ -325,6 +340,55 @@ public class MediaSaveService extends Service {
             boolean previouslyFull = isQueueFull();
             mMemoryUse -= data.length;
             if (isQueueFull() != previouslyFull) onQueueAvailable();
+        }
+    }
+
+    private class HEIFImageSaveTask extends AsyncTask<Void, Void, Uri> {
+        private String path;
+        private String title;
+        private long date;
+        private Location loc;
+        private int width, height;
+        private int orientation;
+        private ExifInterface exif;
+        private ContentResolver resolver;
+        private OnMediaSavedListener listener;
+        private int quality;
+        private String pictureFormat;
+
+        public HEIFImageSaveTask(String path, String title, long date, Location loc,
+                                 int width, int height, int orientation, ExifInterface exif,
+                                 ContentResolver resolver, OnMediaSavedListener listener,
+                                 int quality,String pictureFormat) {
+            this.path = path;
+            this.title = title;
+            this.date = date;
+            this.loc = loc;
+            this.width = width;
+            this.height = height;
+            this.orientation = orientation;
+            this.exif = exif;
+            this.resolver = resolver;
+            this.listener = listener;
+            this.quality = quality;
+            this.pictureFormat = pictureFormat;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Uri doInBackground(Void... params) {
+            return Storage.addHeifImage(
+                    resolver,title,date,loc,orientation,exif,path,
+                    width,height,quality,pictureFormat);
+        }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            if (listener != null) listener.onMediaSaved(uri);
         }
     }
 
