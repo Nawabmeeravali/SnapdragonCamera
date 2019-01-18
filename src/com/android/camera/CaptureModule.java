@@ -289,6 +289,10 @@ public class CaptureModule implements CameraModule, PhotoController,
             new CaptureResult.Key<>("org.codeaurora.qcamera3.bokeh.status", Integer.class);
     public static final CaptureRequest.Key<Integer> sharpness_control = new CaptureRequest.Key<>(
             "org.codeaurora.qcamera3.sharpness.strength", Integer.class);
+    public static final CaptureRequest.Key<Integer> exposure_metering = new CaptureRequest.Key<>(
+            "org.codeaurora.qcamera3.exposure_metering.exposure_metering_mode", Integer.class);
+    public static final CaptureRequest.Key<Byte> earlyPCR =
+            new CaptureRequest.Key<>("org.quic.camera.EarlyPCRenable.EarlyPCRenable", byte.class);
 
     public static CameraCharacteristics.Key<int[]> ISO_AVAILABLE_MODES =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.iso_exp_priority.iso_available_modes", int[].class);
@@ -2520,6 +2524,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyDenoise(builder);
         applyHistogram(builder);
         applySharpnessControlModes(builder);
+        applyExposureMeteringModes(builder);
+        applyEarlyPCR(builder);
         enableBokeh(builder);
         applyWbColorTemperature(builder);
     }
@@ -3838,6 +3844,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyFaceDetection(builder);
         applyZoom(builder, cameraId);
         applyVideoHDR(builder);
+        applyEarlyPCR(builder);
     }
 
     private void applyVideoHDR(CaptureRequest.Builder builder) {
@@ -4588,6 +4595,22 @@ public class CaptureModule implements CameraModule, PhotoController,
             intValue = Integer.parseInt(value);
         }
         return intValue;
+    }
+
+    private void applyExposureMeteringModes(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_EXPOSURE_METERING_MODE);
+        if (value != null) {
+            int intValue = Integer.parseInt(value);
+            request.set(CaptureModule.exposure_metering, intValue);
+        }
+    }
+
+    private void applyEarlyPCR(CaptureRequest.Builder request) {
+        try {
+            request.set(CaptureModule.earlyPCR, (byte) (mHighSpeedCapture ? 0x00 : 0x01));
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
     }
 
     private void enableBokeh(CaptureRequest.Builder request) {
