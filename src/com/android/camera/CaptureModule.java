@@ -2641,10 +2641,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(isClearSightOn()) {
             ClearSightImageProcessor.getInstance().close();
         }
+        mUI.hideSurfaceView();
         closeCamera();
         resetAudioMute();
         mUI.showPreviewCover();
-        mUI.hideSurfaceView();
         mFirstPreviewLoaded = false;
         stopBackgroundThread();
         mLastJpegData = null;
