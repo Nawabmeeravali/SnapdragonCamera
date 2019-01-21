@@ -31,6 +31,7 @@ package com.android.camera;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -47,9 +48,14 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.util.Log;
 import android.widget.Toast;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.EditText;
+import android.text.InputType;
 
 import org.codeaurora.snapcam.R;
 import com.android.camera.util.CameraUtil;
+import com.android.camera.ui.RotateTextToast;
 
 import java.util.List;
 import java.util.Map;
@@ -57,8 +63,10 @@ import java.util.Set;
 import java.util.Arrays;
 
 public class SettingsActivity extends PreferenceActivity {
+    private static final String TAG = "SettingsActivity";
     private SettingsManager mSettingsManager;
     private SharedPreferences mSharedPreferences;
+    private SharedPreferences mLocalSharedPref;
     private boolean mDeveloperMenuEnabled;
     private int privateCounter = 0;
     private final int DEVELOPER_MENU_TOUCH_COUNT = 10;
@@ -103,12 +111,12 @@ public class SettingsActivity extends PreferenceActivity {
                 if (pref != null) {
                     pref.setEnabled(enabled);
                 }
-                if ( pref.getKey().equals(SettingsManager.KEY_QCFA) ) {
+                if (pref.getKey().equals(SettingsManager.KEY_QCFA)) {
                     mSettingsManager.updateQcfaPictureSize();
                     updatePreference(SettingsManager.KEY_PICTURE_SIZE);
                 }
 
-                if ( pref.getKey().equals(SettingsManager.KEY_VIDEO_HDR_VALUE) ) {
+                if (pref.getKey().equals(SettingsManager.KEY_VIDEO_HDR_VALUE)) {
                     ListPreference autoHdrPref = (ListPreference) findPreference(
                             mSettingsManager.KEY_AUTO_HDR);
                     if (pref.getSummary().equals("enable")) {
@@ -120,9 +128,392 @@ public class SettingsActivity extends PreferenceActivity {
                         autoHdrPref.setEnabled(true);
                     }
                 }
+
+                if ((pref.getKey().equals(SettingsManager.KEY_MANUAL_WB))) {
+                    updateManualWBSettings();
+                }
+
+                if (pref.getKey().equals(SettingsManager.KEY_MANUAL_EXPOSURE)) {
+                    UpdateManualExposureSettings();
+                }
             }
         }
     };
+
+    private void showManualWBGainDialog(final LinearLayout linear,
+                                        final AlertDialog.Builder alert) {
+        SharedPreferences.Editor editor = mLocalSharedPref.edit();
+        final TextView rGainTtext = new TextView(SettingsActivity.this);
+        final TextView rGainValue = new TextView(SettingsActivity.this);
+        final EditText rGainInput = new EditText(SettingsActivity.this);
+        final TextView gGainTtext = new TextView(SettingsActivity.this);
+        final TextView gGainValue = new TextView(SettingsActivity.this);
+        final EditText gGainInput = new EditText(SettingsActivity.this);
+        final TextView bGainTtext = new TextView(SettingsActivity.this);
+        final TextView bGainValue = new TextView(SettingsActivity.this);
+        final EditText bGainInput = new EditText(SettingsActivity.this);
+        int floatType = InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_NUMBER;
+        rGainInput.setInputType(floatType);
+        gGainInput.setInputType(floatType);
+        bGainInput.setInputType(floatType);
+
+        float rGain = mLocalSharedPref.getFloat(SettingsManager.KEY_MANUAL_WB_R_GAIN, -1.0f);
+        float gGain = mLocalSharedPref.getFloat(SettingsManager.KEY_MANUAL_WB_G_GAIN, -1.0f);
+        float bGain = mLocalSharedPref.getFloat(SettingsManager.KEY_MANUAL_WB_B_GAIN, -1.0f);
+
+        if (rGain == -1.0) {
+            rGainValue.setText(" Current rGain is " );
+        } else {
+            rGainValue.setText(" Current rGain is " + rGain);
+        }
+        if (rGain == -1.0) {
+            gGainValue.setText(" Current gGain is " );
+        } else {
+            gGainValue.setText(" Current gGain is " + gGain);
+        }
+        if (rGain == -1.0) {
+            bGainValue.setText(" Current bGain is ");
+        } else {
+            bGainValue.setText(" Current bGain is " + bGain);
+        }
+        int cameraId = mSettingsManager.getCurrentCameraId();
+        final float[] gainsRange = mSettingsManager.getWBGainsRangeValues(cameraId);
+        //refresh camera parameters to get latest CCT value
+        if (gainsRange == null) {
+            alert.setMessage("Enter gains value in the range get is NULL ");
+        } else {
+            alert.setMessage("Enter gains value in the range of " + gainsRange[0]+ " to " + gainsRange[1]);
+        }
+        linear.addView(rGainTtext);
+        linear.addView(rGainInput);
+        linear.addView(rGainValue);
+        linear.addView(gGainTtext);
+        linear.addView(gGainInput);
+        linear.addView(gGainValue);
+        linear.addView(bGainTtext);
+        linear.addView(bGainInput);
+        linear.addView(bGainValue);
+        alert.setView(linear);
+        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                float rGain = -1.0f;
+                float gGain = -1.0f;
+                float bGain = -1.0f;
+                String rgainStr = rGainInput.getText().toString();
+                String ggainStr = gGainInput.getText().toString();
+                String bgainStr = bGainInput.getText().toString();
+                if (rgainStr.length() > 0) {
+                    rGain = Float.parseFloat(rgainStr);
+                }
+                if (ggainStr.length() > 0) {
+                    gGain = Float.parseFloat(ggainStr);
+                }
+                if (bgainStr.length() > 0) {
+                    bGain = Float.parseFloat(bgainStr);
+                }
+                if (gainsRange == null) {
+                    RotateTextToast.makeText(SettingsActivity.this, "Gains Range is NULL, " +
+                            "Invalid gains", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (rGain <= gainsRange[1] && rGain >= gainsRange[0]) {
+                    Log.v(TAG, "Setting rGain value : " + rGain);
+                    editor.putFloat(SettingsManager.KEY_MANUAL_WB_R_GAIN, rGain);
+                } else {
+                    RotateTextToast.makeText(SettingsActivity.this, "Invalid rGain value:",
+                            Toast.LENGTH_SHORT).show();
+                }
+                if (gGain <= gainsRange[1] && gGain >= gainsRange[0]) {
+                    Log.v(TAG, "Setting gGain value : " + gGain);
+                    editor.putFloat(SettingsManager.KEY_MANUAL_WB_G_GAIN, gGain);
+                } else {
+                    RotateTextToast.makeText(SettingsActivity.this, "Invalid gGain value:",
+                            Toast.LENGTH_SHORT).show();
+                }
+                if (bGain <= gainsRange[1] && bGain >= gainsRange[0]) {
+                    Log.v(TAG, "Setting bGain value : " + bGain);
+                    editor.putFloat(SettingsManager.KEY_MANUAL_WB_B_GAIN, bGain);
+                } else {
+                    RotateTextToast.makeText(SettingsActivity.this, "Invalid bGain value:",
+                            Toast.LENGTH_SHORT).show();
+                }
+                editor.apply();
+            }
+        });
+        alert.show();
+    }
+
+    private void updateManualWBSettings() {
+        int cameraId = mSettingsManager.getCurrentCameraId();
+        SharedPreferences.Editor editor = mLocalSharedPref.edit();
+        final AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
+        LinearLayout linear = new LinearLayout(SettingsActivity.this);
+        linear.setOrientation(1);
+        alert.setTitle("Manual White Balance Settings");
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+
+        String cctMode = this.getString(
+                R.string.pref_camera_manual_wb_value_color_temperature);
+        String rgbGainMode = this.getString(
+                R.string.pref_camera_manual_wb_value_rbgb_gains);
+        String currentWBTemp = mLocalSharedPref.getString(
+                SettingsManager.KEY_MANUAL_WB_TEMPERATURE_VALUE, "-1");
+        final String manualWBMode = mSettingsManager.getValue(SettingsManager.KEY_MANUAL_WB);
+        Log.v(TAG, "manualWBMode selected = " + manualWBMode);
+        final int[] wbRange = mSettingsManager.getWBColorTemperatureRangeValues(cameraId);
+        if (manualWBMode.equals(cctMode)) {
+            final TextView CCTtext = new TextView(SettingsActivity.this);
+            final EditText CCTinput = new EditText(SettingsActivity.this);
+            CCTinput.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+            //refresh camera parameters to get latest CCT value
+            if (currentWBTemp.equals("-1")) {
+                CCTtext.setText(" Current CCT is ");
+            } else {
+                CCTtext.setText(" Current CCT is " + currentWBTemp);
+            }
+            if (wbRange == null) {
+                alert.setMessage("Enter CCT value is get NULL ");
+            } else {
+                alert.setMessage("Enter CCT value in the range of " + wbRange[0] + " to " + wbRange[1]);
+            }
+            linear.addView(CCTinput);
+            linear.addView(CCTtext);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    int newCCT = -1;
+                    String cct = CCTinput.getText().toString();
+                    if (cct.length() > 0) {
+                        newCCT = Integer.parseInt(cct);
+                    }
+                    if (wbRange == null) {
+                        RotateTextToast.makeText(SettingsActivity.this, "CCT Range is NULL",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (newCCT <= wbRange[1] && newCCT >= wbRange[0]) {
+                        Log.v(TAG, "Setting CCT value : " + newCCT);
+                        //0 corresponds to manual CCT mode
+                        editor.putString(SettingsManager.KEY_MANUAL_WB_TEMPERATURE_VALUE, cct);
+                        editor.apply();
+                    } else {
+                        RotateTextToast.makeText(SettingsActivity.this, "Invalid CCT",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else if (manualWBMode.equals(rgbGainMode)) {
+            showManualWBGainDialog(linear, alert);
+        } else {
+            // user select off, nothing to do.
+        }
+    }
+    private void UpdateManualExposureSettings() {
+        //dismiss all popups first, because we need to show edit dialog
+        int cameraId = mSettingsManager.getCurrentCameraId();
+        final SharedPreferences pref = SettingsActivity.this.getSharedPreferences(
+                ComboPreferences.getLocalSharedPreferencesName(SettingsActivity.this,
+                        cameraId),
+                Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        final AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
+        LinearLayout linear = new LinearLayout(SettingsActivity.this);
+        linear.setOrientation(1);
+        final TextView ISOtext = new TextView(SettingsActivity.this);
+        final EditText ISOinput = new EditText(SettingsActivity.this);
+        final TextView ExpTimeText = new TextView(SettingsActivity.this);
+        final EditText ExpTimeInput = new EditText(SettingsActivity.this);
+        ISOinput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        ExpTimeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        alert.setTitle("Manual Exposure Settings");
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        String isoPriority = this.getString(
+                R.string.pref_camera_manual_exp_value_ISO_priority);
+        String expTimePriority = this.getString(
+                R.string.pref_camera_manual_exp_value_exptime_priority);
+        String userSetting = this.getString(
+                R.string.pref_camera_manual_exp_value_user_setting);
+        String gainsPriority = this.getString(
+                R.string.pref_camera_manual_exp_value_gains_priority);
+        String manualExposureMode = mSettingsManager.getValue(SettingsManager.KEY_MANUAL_EXPOSURE);
+        String currentISO = pref.getString(SettingsManager.KEY_MANUAL_ISO_VALUE, "-1");
+        long[] exposureRange = mSettingsManager.getExposureRangeValues(cameraId);
+
+        int[] isoRange = mSettingsManager.getIsoRangeValues(cameraId);
+        if (!currentISO.equals("-1")) {
+            ISOtext.setText("Current ISO is " + currentISO);
+        }
+        String currentExpTime = pref.getString(SettingsManager.KEY_MANUAL_EXPOSURE_VALUE, "-1");
+        if (!currentExpTime.equals("-1")) {
+            ExpTimeText.setText("Current exposure time is " + currentExpTime);
+        }
+        Log.v(TAG, "manual Exposure Mode selected = " + manualExposureMode);
+        if (manualExposureMode.equals(isoPriority)) {
+            alert.setMessage("Enter ISO in the range of " + isoRange[0] + " to " + isoRange[1]);
+            linear.addView(ISOinput);
+            linear.addView(ISOtext);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    int newISO = -1;
+                    String iso = ISOinput.getText().toString();
+                    Log.v(TAG, "string iso length " + iso.length() + ", iso :" + iso);
+                    if (iso.length() > 0) {
+                        newISO = Integer.parseInt(iso);
+                    }
+                    if (newISO <= isoRange[1] && newISO >= isoRange[0]) {
+                        editor.putString(SettingsManager.KEY_MANUAL_ISO_VALUE, iso);
+                        editor.apply();
+                    } else {
+                        RotateTextToast.makeText(SettingsActivity.this, "Invalid ISO",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else if (manualExposureMode.equals(expTimePriority)) {
+            if (exposureRange == null) {
+                alert.setMessage("Get Exposure time range is NULL ");
+            } else {
+                alert.setMessage("Enter exposure time in the range of " + exposureRange[0]
+                        + "ns to " + exposureRange[1] + "ns");
+            }
+            linear.addView(ExpTimeInput);
+            linear.addView(ExpTimeText);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    double newExpTime = -1;
+                    String expTime = ExpTimeInput.getText().toString();
+                    if (expTime.length() > 0) {
+                        try {
+                            newExpTime = Double.parseDouble(expTime);
+                        } catch (NumberFormatException e) {
+                            Log.w(TAG, "Input expTime " + expTime + " is invalid");
+                            newExpTime = Double.parseDouble(expTime) + 1f;
+                        }
+                    }
+                    if (exposureRange != null &&
+                            newExpTime <= exposureRange[1] && newExpTime >= exposureRange[0]) {
+                        editor.putString(SettingsManager.KEY_MANUAL_EXPOSURE_VALUE, expTime);
+                        editor.apply();
+                    } else {
+                        RotateTextToast.makeText(SettingsActivity.this, "Invalid exposure time",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else if (manualExposureMode.equals(userSetting)) {
+            alert.setMessage("Full manual mode - Enter both ISO and Exposure Time");
+            final TextView ISORangeText = new TextView(this);
+            final TextView ExpTimeRangeText = new TextView(this);
+            ISORangeText.setText("Enter ISO in the range of " + isoRange[0] + " to " + isoRange[1]);
+            if (exposureRange == null) {
+                ExpTimeRangeText.setText("Get Exposure time range is NULL ");
+            } else {
+                ExpTimeRangeText.setText("Enter exposure time in the range of " + exposureRange[0]
+                        + "ns to " + exposureRange[1] + "ns");
+            }
+            linear.addView(ISORangeText);
+            linear.addView(ISOinput);
+            linear.addView(ISOtext);
+            linear.addView(ExpTimeRangeText);
+            linear.addView(ExpTimeInput);
+            linear.addView(ExpTimeText);
+            alert.setView(linear);
+            alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    int newISO = -1;
+                    String iso = ISOinput.getText().toString();
+                    Log.v(TAG, "string iso length " + iso.length() + ", iso :" + iso);
+                    if (iso.length() > 0) {
+                        newISO = Integer.parseInt(iso);
+                    }
+                    if (newISO <= isoRange[1] && newISO >= isoRange[0]) {
+                        editor.putString(SettingsManager.KEY_MANUAL_ISO_VALUE, iso);
+                        editor.apply();
+                    } else {
+                        RotateTextToast.makeText(SettingsActivity.this, "Invalid ISO",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    double newExpTime = -1;
+                    String expTime = ExpTimeInput.getText().toString();
+                    if (expTime.length() > 0) {
+                        try {
+                            newExpTime = Double.parseDouble(expTime);
+                        } catch (NumberFormatException e) {
+                            Log.w(TAG, "Input expTime " + expTime + " is invalid");
+                            newExpTime = Double.parseDouble(expTime) + 1f;
+                        }
+                    }
+                    if (exposureRange != null &&
+                            newExpTime <= exposureRange[1] && newExpTime >= exposureRange[0]) {
+                        editor.putString(SettingsManager.KEY_MANUAL_EXPOSURE_VALUE, expTime);
+                        editor.apply();
+                    } else {
+                        RotateTextToast.makeText(SettingsActivity.this, "Invalid exposure time",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else if (manualExposureMode.equals(gainsPriority)) {
+            handleManualGainsPriority(linear, ISOtext, ExpTimeInput, pref);
+        }
+    }
+
+    private void handleManualGainsPriority(final LinearLayout linear, final TextView gainsText,
+                                           final EditText gainsInput, final SharedPreferences pref) {
+        SharedPreferences.Editor editor = pref.edit();
+        final AlertDialog.Builder alert = new AlertDialog.Builder(SettingsActivity.this);
+        int cameraId = mSettingsManager.getCurrentCameraId();
+        int[] isoRange = mSettingsManager.getIsoRangeValues(cameraId);
+        float[] gainsRange = new float[2];
+        gainsRange[0] = 1.0f;
+        gainsRange[1] = (float) isoRange[1]/isoRange[0];
+        float currentGains = pref.getFloat(SettingsManager.KEY_MANUAL_GAINS_VALUE, -1.0f);
+        if (currentGains != -1.0f) {
+            gainsText.setText(" Current Gains is " + currentGains);
+        } else {
+            gainsText.setText(" Please enter gains value ");
+        }
+        alert.setMessage("Enter gains in the range of " + gainsRange[0] + " to " + gainsRange[1]);
+        gainsInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        linear.addView(gainsInput);
+        linear.addView(gainsText);
+        alert.setView(linear);
+        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                float newGain = -1;
+                String gain = gainsInput.getText().toString();
+                Log.v(TAG, "string gain length " + gain.length() + ", gain :" + gain);
+                if (gain.length() > 0) {
+                    newGain = Float.parseFloat(gain);
+                }
+                if (newGain <= gainsRange[1] && newGain >= gainsRange[0]) {
+                    editor.putFloat(SettingsManager.KEY_MANUAL_GAINS_VALUE, newGain);
+                    editor.apply();
+                } else {
+                    RotateTextToast.makeText(SettingsActivity.this, "Invalid GAINS",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        alert.show();
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -144,6 +535,10 @@ public class SettingsActivity extends PreferenceActivity {
             finish();
             return;
         }
+        int cameraId = mSettingsManager.getCurrentCameraId();
+        mLocalSharedPref = this.getSharedPreferences(
+                ComboPreferences.getLocalSharedPreferencesName(this, cameraId),
+                Context.MODE_PRIVATE);
         mSettingsManager.registerListener(mListener);
         addPreferencesFromResource(R.xml.setting_menu_preferences);
 

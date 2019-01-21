@@ -479,6 +479,11 @@ public class PostProcessor{
                 image.close();
                 return;
             }
+            String value = SettingsManager.getInstance().getValue(SettingsManager.KEY_JPEG_QUALITY);
+            int jpegQuality = 85;
+            if (value != null) {
+                jpegQuality = mController.getQualityNumber(value);
+            }
             if (DEBUG_ZSL) Log.d(TAG, "reprocess Image request " + image.getTimestamp());
             CaptureRequest.Builder builder = null;
             try {
@@ -487,6 +492,7 @@ public class PostProcessor{
                         mCameraDevice.createReprocessCaptureRequest(metadata);
                 builder.set(CaptureRequest.JPEG_ORIENTATION,
                             CameraUtil.getJpegRotation(mController.getMainCameraId(), mController.getDisplayOrientation()));
+                builder.set(CaptureRequest.JPEG_QUALITY, (byte) jpegQuality);
                 builder.set(CaptureRequest.JPEG_THUMBNAIL_SIZE, mController.getThumbSize());
                 builder.set(CaptureRequest.JPEG_THUMBNAIL_QUALITY, (byte)80);
                 builder.set(CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE,
@@ -665,8 +671,9 @@ public class PostProcessor{
                 || "enable".equals(
                          SettingsManager.getInstance().getValue(SettingsManager.KEY_AUTO_HDR))
                 || SettingsManager.getInstance().isCamera2HDRSupport()
-                || "18".equals(SettingsManager.getInstance().getValue(
-                                  SettingsManager.KEY_SCENE_MODE))
+                || ("18".equals(SettingsManager.getInstance().getValue(
+                                  SettingsManager.KEY_SCENE_MODE)) &&
+                   !"1".equals(SettingsManager.getInstance().getValue(SettingsManager.KEY_HDR_MODE)))
                 || mController.getCameraMode() == CaptureModule.DUAL_MODE
                 || isSupportedQcfa) {
             mUseZSL = false;

@@ -366,6 +366,13 @@
         camera:entryValues="@array/pref_camera_zoom_entryvalues" />
 
     <ListPreference
+        camera:key="pref_camera2_manual_exp_key"
+        camera:defaultValue="@string/pref_camera_manual_exp_default"
+        camera:title="@string/pref_camera_manual_exp_title"
+        camera:entries="@array/pref_camera_manual_exp_entries"
+        camera:entryValues="@array/pref_camera_manual_exp_entry_values" />
+
+    <ListPreference
         camera:key="pref_camera2_qcfa_key"
         camera:defaultValue="@string/pref_camera2_qcfa_default"
         camera:title="@string/pref_camera2_qcfa_title"
@@ -373,11 +380,25 @@
         camera:entryValues="@array/pref_camera2_qcfa_entryvalues" />
 
     <ListPreference
+        camera:defaultValue="@string/pref_camera_manual_wb_default"
+        camera:entries="@array/pref_camera_manual_wb_entries"
+        camera:entryValues="@array/pref_camera_manual_wb_entry_values"
+        camera:key="pref_camera2_manual_wb_key"
+        camera:title="@string/pref_camera_manual_wb_title" />
+
+    <ListPreference
         camera:key="pref_camera2_bsgc_key"
         camera:defaultValue="@string/pref_camera2_bsgc_default"
         camera:title="@string/pref_camera2_bsgc_title"
         camera:entries="@array/pref_camera2_bsgc_entries"
         camera:entryValues="@array/pref_camera2_bsgc_entryvalues" />
+
+    <ListPreference
+        camera:key="pref_camera2_denoise_key"
+        camera:defaultValue="@string/pref_camera_denoise_default"
+        camera:title="@string/pref_camera_denoise_title"
+        camera:entries="@array/pref_camera_denoise_entries"
+        camera:entryValues="@array/pref_camera_denoise_entryvalues" />
 
     <ListPreference
         camera:defaultValue="@string/pref_camera2_switch_camera_default"
@@ -390,5 +411,33 @@
         camera:title="@string/pref_camera2_video_hdr_title"
         camera:entries="@array/pref_camera2_video_hdr_entries"
         camera:entryValues="@array/pref_camera2_video_hdr_entryvalues" />
+
+    <ListPreference
+        camera:key="pref_camera2_sharpness_control_key"
+        camera:defaultValue="@string/pref_camera2_sharpness_control_default"
+        camera:title="@string/pref_camera2_sharpness_control_title"
+        camera:entries="@array/pref_camera2_sharpness_control_entries"
+        camera:entryValues="@array/pref_camera2_multilevel_sharpness_entryvalues"/>
+
+    <ListPreference
+        camera:key="pref_camera2_afmode_key"
+        camera:defaultValue="@string/pref_camera2_afmode_default"
+        camera:title="@string/pref_camera2_afmode_title"
+        camera:entries="@array/pref_camera2_afmode_entries"
+        camera:entryValues="@array/pref_camera2_afmode_entryvalues"/>
+
+    <ListPreference
+        camera:key="pref_camera2_exposure_metering_key"
+        camera:defaultValue="@string/pref_camera2_exposure_metering_default"
+        camera:title="@string/pref_camera2_exposure_metering_title"
+        camera:entries="@array/pref_camera2_exposure_metering_entries"
+        camera:entryValues="@array/pref_camera2_exposure_metering_entryvalues" />
+
+    <ListPreference
+        camera:key="pref_camera2_hdr_mode_key"
+        camera:defaultValue="@string/pref_camera2_hdr_mode_default"
+        camera:title="@string/pref_camera2_hdr_mode_title"
+        camera:entries="@array/pref_camera2_hdr_mode_entries"
+        camera:entryValues="@array/pref_camera2_hdr_mode_entryvalues" />
 
 </PreferenceGroup>

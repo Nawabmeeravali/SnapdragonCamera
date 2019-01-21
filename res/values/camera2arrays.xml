@@ -1085,4 +1085,67 @@ for time lapse recording -->
         <item>@string/pref_camera2_video_hdr_entry_value_enable</item>
     </string-array>
 
+    <string-array name="pref_camera2_sharpness_control_entries">
+        <item>@string/pref_camera2_sharpness_control_entry_level0</item>
+        <item>@string/pref_camera2_sharpness_control_entry_level1</item>
+        <item>@string/pref_camera2_sharpness_control_entry_level2</item>
+        <item>@string/pref_camera2_sharpness_control_entry_level3</item>
+        <item>@string/pref_camera2_sharpness_control_entry_level4</item>
+        <item>@string/pref_camera2_sharpness_control_entry_level5</item>
+        <item>@string/pref_camera2_sharpness_control_entry_level6</item>
+    </string-array>
+
+    <!-- Entry Valur array for sharpness -->
+    <string-array name="pref_camera2_multilevel_sharpness_entryvalues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+
+    <string-array name="pref_camera2_afmode_entries">
+        <item>@string/pref_camera2_afmode_entry_disable</item>
+        <item>@string/pref_camera2_afmode_entry_off</item>
+        <item>@string/pref_camera2_afmode_entry_auto</item>
+        <item>@string/pref_camera2_afmode_entry_macro</item>
+        <item>@string/pref_camera2_afmode_entry_continuous_video</item>
+        <item>@string/pref_camera2_afmode_entry_continuous_picture</item>
+        <item>@string/pref_camera2_afmode_entry_edof</item>
+    </string-array>
+
+    <string-array name="pref_camera2_afmode_entryvalues">
+        <item>@string/pref_camera2_afmode_value_disable</item>
+        <item>@string/pref_camera2_afmode_value_off</item>
+        <item>@string/pref_camera2_afmode_value_auto</item>
+        <item>@string/pref_camera2_afmode_value_macro</item>
+        <item>@string/pref_camera2_afmode_value_continuous_video</item>
+        <item>@string/pref_camera2_afmode_value_continuous_picture</item>
+        <item>@string/pref_camera2_afmode_value_edof</item>
+    </string-array>
+
+    <string-array name="pref_camera2_exposure_metering_entries" translatable="false">
+        <item>@string/pref_camera2_exposure_metering_entry_frame_average</item>
+        <item>@string/pref_camera2_exposure_metering_entry_center_weighted</item>
+        <item>@string/pref_camera2_exposure_metering_entry_spot_meteting</item>
+    </string-array>
+
+    <string-array name="pref_camera2_exposure_metering_entryvalues" translatable="false">
+        <item>@string/pref_camera2_exposure_metering_entryvalue_frame_average</item>
+        <item>@string/pref_camera2_exposure_metering_entryvalue_center_weighted</item>
+        <item>@string/pref_camera2_exposure_metering_entryvalue_spot_meteting</item>
+    </string-array>
+
+    <string-array name="pref_camera2_hdr_mode_entries" translatable="false">
+        <item>@string/pref_camera2_hdr_mode_entry_multi_frame</item>
+        <item>@string/pref_camera2_hdr_mode_entry_sensor</item>
+    </string-array>
+
+    <string-array name="pref_camera2_hdr_mode_entryvalues" translatable="false">
+        <item>@string/pref_camera2_hdr_mode_entry_value_multi_frame</item>
+        <item>@string/pref_camera2_hdr_mode_entry_value_sensor</item>
+    </string-array>
+
 </resources>

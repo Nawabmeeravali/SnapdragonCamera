@@ -150,13 +150,32 @@ public class SettingsManager implements ListMenu.SettingsListener {
     public static final String KEY_AUTO_HDR = "pref_camera2_auto_hdr_key";
     public static final String KEY_HDR = "pref_camera2_hdr_key";
     public static final String KEY_VIDEO_HDR_VALUE = "pref_camera2_video_hdr_key";
+    public static final String KEY_HDR_MODE = "pref_camera2_hdr_mode_key";
     public static final String KEY_SAVERAW = "pref_camera2_saveraw_key";
     public static final String KEY_ZOOM = "pref_camera2_zoom_key";
     public static final String KEY_QCFA = "pref_camera2_qcfa_key";
+    public static final String KEY_SHARPNESS_CONTROL_MODE = "pref_camera2_sharpness_control_key";
+    public static final String KEY_AF_MODE = "pref_camera2_afmode_key";
+    public static final String KEY_EXPOSURE_METERING_MODE = "pref_camera2_exposure_metering_key";
+
+    public static final String KEY_MANUAL_WB = "pref_camera2_manual_wb_key";
+    public static final String KEY_MANUAL_WB_TEMPERATURE_VALUE =
+            "pref_camera2_manual_temperature_key";
+    public static final String KEY_MANUAL_WB_R_GAIN = "pref_camera2_manual_wb_r_gain";
+    public static final String KEY_MANUAL_WB_G_GAIN = "pref_camera2_manual_wb_g_gain";
+    public static final String KEY_MANUAL_WB_B_GAIN = "pref_camera2_manual_wb_b_gain";
+
+    //manual 3A keys and parameter strings
+    public static final String KEY_MANUAL_EXPOSURE = "pref_camera2_manual_exp_key";
+    public static final String KEY_MANUAL_ISO_VALUE = "pref_camera2_manual_iso_key";
+    public static final String KEY_MANUAL_GAINS_VALUE = "pref_camera2_manual_gains_key";
+    public static final String KEY_MANUAL_EXPOSURE_VALUE = "pref_camera2_manual_exposure_key";
+    public static final String MAUNAL_ABSOLUTE_ISO_VALUE = "absolute";
 
     public static final HashMap<String, Integer> KEY_ISO_INDEX = new HashMap<String, Integer>();
     public static final String KEY_BSGC_DETECTION = "pref_camera2_bsgc_key";
     public static final String KEY_ZSL = "pref_camera2_zsl_key";
+    public static final String KEY_DENOISE = "pref_camera2_denoise_key";
 
     private static final String TAG = "SnapCam_SettingsManager";
 
@@ -188,11 +207,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         KEY_ISO_INDEX.put("auto", 0);
         KEY_ISO_INDEX.put("deblur", 1);
         KEY_ISO_INDEX.put("100", 2);
-        KEY_ISO_INDEX.put("100", 2);
         KEY_ISO_INDEX.put("200", 3);
         KEY_ISO_INDEX.put("400", 4);
         KEY_ISO_INDEX.put("800", 5);
         KEY_ISO_INDEX.put("1600", 6);
+        KEY_ISO_INDEX.put("3200", 7);
+        KEY_ISO_INDEX.put(MAUNAL_ABSOLUTE_ISO_VALUE, 8);
     }
 
     private SettingsManager(Context context) {
@@ -666,6 +686,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference zoom = mPreferenceGroup.findPreference(KEY_ZOOM);
         ListPreference qcfa = mPreferenceGroup.findPreference(KEY_QCFA);
         ListPreference bsgc = mPreferenceGroup.findPreference(KEY_BSGC_DETECTION);
+        ListPreference hdr_mode = mPreferenceGroup.findPreference(KEY_HDR_MODE);
 
         if (whiteBalance != null) {
             if (filterUnsupportedOptions(whiteBalance, getSupportedWhiteBalanceModes(cameraId))) {
@@ -817,6 +838,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 mFilteredKeys.add(zoom.getKey());
             }
         }
+
+        if (hdr_mode != null) {
+            if (!isZZHDRSupported()) {
+                removePreference(mPreferenceGroup,KEY_HDR_MODE);
+            }
+        }
     }
 
     private void runTimeUpdateDependencyOptions(ListPreference pref) {
@@ -878,6 +905,42 @@ public class SettingsManager implements ListMenu.SettingsListener {
         ListPreference pref = mPreferenceGroup.findPreference(KEY_EXPOSURE);
         if (pref == null) return null;
         return pref.getEntryValues();
+    }
+
+    public long[] getExposureRangeValues(int cameraId) {
+        long[] exposureRange = null;
+        try {
+            exposureRange =  mCharacteristics.get(cameraId).get(
+                    CaptureModule.EXPOSURE_RANGE);
+            if (exposureRange == null) {
+                Log.w(TAG, "get exposure range modes is null.");
+                return null;
+            }
+        } catch(NullPointerException e) {
+            Log.w(TAG, "Supported exposure range modes is null.");
+        } catch(IllegalArgumentException e) {
+            Log.w(TAG, "IllegalArgumentException Supported exposure range modes is null.");
+        }
+        return exposureRange;
+    }
+
+    public int[] getIsoRangeValues(int cameraId) {
+        Range<Integer> range = null;
+        int[] result = new int[2];
+        try {
+            range = mCharacteristics.get(cameraId).get(CameraCharacteristics
+                    .SENSOR_INFO_SENSITIVITY_RANGE);
+            if (range == null) {
+                return null;
+            }
+            result[0] = range.getLower();
+            result[1] = range.getUpper();
+        } catch(NullPointerException e) {
+            Log.w(TAG, "Supported iso range is null.");
+        } catch(IllegalArgumentException e) {
+            Log.w(TAG, "IllegalArgumentException Supported iso range is null.");
+        }
+        return result;
     }
 
     private void buildCameraId() {
@@ -962,6 +1025,40 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 mFilteredKeys.add(hfrPref.getKey());
             }
         }
+    }
+
+    public int[] getWBColorTemperatureRangeValues(int cameraId) {
+        int[] wbRange = null;
+        try {
+            wbRange =  mCharacteristics.get(cameraId).get(CaptureModule.WB_COLOR_TEMPERATURE_RANGE);
+            if (wbRange == null) {
+                Log.w(TAG, "Supported exposure range get null.");
+                return null;
+            }
+        } catch(NullPointerException e) {
+            Log.w(TAG, "Supported exposure range modes is null.");
+        } catch(IllegalArgumentException e) {
+            Log.w(TAG, "Supported exposure range modes occur IllegalArgumentException.");
+            e.printStackTrace();
+        }
+        return wbRange;
+    }
+
+    public float[] getWBGainsRangeValues(int cameraId) {
+        float[] rgbRange = null;
+        try {
+            rgbRange =  mCharacteristics.get(cameraId).get(CaptureModule.WB_RGB_GAINS_RANGE);
+            if (rgbRange == null) {
+                Log.w(TAG, "Supported gains range get null.");
+                return null;
+            }
+        } catch(NullPointerException e) {
+            Log.w(TAG, "Supported gains range modes is null.");
+        } catch(IllegalArgumentException e) {
+            Log.w(TAG, "Supported gains range modes occur IllegalArgumentException.");
+            e.printStackTrace();
+        }
+        return rgbRange;
     }
 
     private List<String> getSupportedChromaFlashPictureSize() {
@@ -1350,19 +1447,31 @@ public class SettingsManager implements ListMenu.SettingsListener {
     }
 
     private List<String> getSupportedIso(int cameraId) {
+        int maxIso = 0;
         Range<Integer> range = mCharacteristics.get(cameraId).get(CameraCharacteristics
                 .SENSOR_INFO_SENSITIVITY_RANGE);
+        if (range != null) {
+            maxIso = range.getUpper();
+        }
+        int[] isoAvailable = mCharacteristics.get(cameraId).get(
+                CaptureModule.ISO_AVAILABLE_MODES);
         List<String> supportedIso = new ArrayList<>();
         supportedIso.add("auto");
 
-        if (range != null) {
-            int max = range.getUpper();
-            int value = 50;
-            while (value <= max) {
-                if (range.contains(value)) {
-                    supportedIso.add("" + value);
+        if (isoAvailable != null) {
+            for (int iso : isoAvailable) {
+                for (String key : KEY_ISO_INDEX.keySet()) {
+                    if ( KEY_ISO_INDEX.get(key).equals(iso)) {
+                        if (key.equals("auto") || key.equals("deblur")) {
+                            supportedIso.add(key);
+                        } else {
+                            int isoInt = Integer.parseInt(key);
+                            if (isoInt <= maxIso) {
+                                supportedIso.add(key);
+                            }
+                        }
+                    }
                 }
-                value += 50;
             }
         } else {
             Log.w(TAG, "Supported ISO range is null.");

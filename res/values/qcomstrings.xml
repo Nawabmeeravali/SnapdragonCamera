@@ -170,12 +170,14 @@
      <string name="pref_camera_manual_exp_entry_ISO_priority">ISO priority</string>
      <string name="pref_camera_manual_exp_entry_exptime_priority">Exposure time priority</string>
      <string name="pref_camera_manual_exp_entry_user_setting">User setting</string>
+     <string name="pref_camera_manual_exp_entry_gains_priority">Gains priority</string>
      <string name="pref_camera_manual_exp_entry_off">Off</string>
 
      <string name="pref_camera_manual_exp_default">off</string>
      <string name="pref_camera_manual_exp_value_ISO_priority">iso-priority</string>
      <string name="pref_camera_manual_exp_value_exptime_priority">exp-time-priority</string>
      <string name="pref_camera_manual_exp_value_user_setting">user-setting</string>
+     <string name="pref_camera_manual_exp_value_gains_priority">gains-priority</string>
      <string name="pref_camera_manual_exp_value_off">off</string>
 
      <!-- Manual white balance entry values -->
@@ -1196,5 +1198,49 @@
     <string name="pref_camera2_video_hdr_entry_disable" translatable="true">disable</string>
     <string name="pref_camera2_video_hdr_entry_value_enable" translatable="false">1</string>
     <string name="pref_camera2_video_hdr_entry_value_disable" translatable="false">0</string>
+
+    <string name="pref_camera2_sharpness_control_title" translatable="true">SharpnessControl</string>
+    <string name="pref_camera2_sharpness_control_default" translatable="true">1</string>
+    <string name="pref_camera2_sharpness_control_entry_level0" translatable="false">Level 0</string>
+    <string name="pref_camera2_sharpness_control_entry_level1" translatable="false">Level 1(Default)</string>
+    <string name="pref_camera2_sharpness_control_entry_level2" translatable="false">Level 2</string>
+    <string name="pref_camera2_sharpness_control_entry_level3" translatable="false">Level 3</string>
+    <string name="pref_camera2_sharpness_control_entry_level4" translatable="false">Level 4</string>
+    <string name="pref_camera2_sharpness_control_entry_level5" translatable="false">Level 5</string>
+    <string name="pref_camera2_sharpness_control_entry_level6" translatable="false">Level 6</string>
+
+    <string name="pref_camera2_afmode_default" translatable="false">-1</string>
+    <string name="pref_camera2_afmode_title">Auto Focus Mode</string>
+    <string name="pref_camera2_afmode_entry_disable">Disable</string>
+    <string name="pref_camera2_afmode_entry_off">Off</string>
+    <string name="pref_camera2_afmode_entry_auto">Auto</string>
+    <string name="pref_camera2_afmode_entry_macro">Macro</string>
+    <string name="pref_camera2_afmode_entry_continuous_video">Continuous Video</string>
+    <string name="pref_camera2_afmode_entry_continuous_picture">Continuous Picture</string>
+    <string name="pref_camera2_afmode_entry_edof">EDOF</string>
+    <string name="pref_camera2_afmode_value_disable" translatable="false">-1</string>
+    <string name="pref_camera2_afmode_value_off" translatable="false">0</string>
+    <string name="pref_camera2_afmode_value_auto" translatable="false">1</string>
+    <string name="pref_camera2_afmode_value_macro" translatable="false">2</string>
+    <string name="pref_camera2_afmode_value_continuous_video" translatable="false">3</string>
+    <string name="pref_camera2_afmode_value_continuous_picture" translatable="false">4</string>
+    <string name="pref_camera2_afmode_value_edof" translatable="false">5</string>
+
+    <string name="pref_camera2_exposure_metering_title" translatable="true">ExposureMetering</string>
+    <string name="pref_camera2_exposure_metering_default" translatable="true">0</string>
+    <string name="pref_camera2_exposure_metering_entry_frame_average" translatable="false">FrameAverage</string>
+    <string name="pref_camera2_exposure_metering_entry_center_weighted" translatable="false">CenterWeighted</string>
+    <string name="pref_camera2_exposure_metering_entry_spot_meteting" translatable="false">SpotMeteting</string>
+    <string name="pref_camera2_exposure_metering_entryvalue_frame_average" translatable="false">0</string>
+    <string name="pref_camera2_exposure_metering_entryvalue_center_weighted" translatable="false">1</string>
+    <string name="pref_camera2_exposure_metering_entryvalue_spot_meteting" translatable="false">2</string>
+
+    <string name="pref_camera2_hdr_mode_title" translatable="true">HDR Mode</string>
+    <string name="pref_camera2_hdr_mode_default" translatable="false">0</string>
+    <string name="pref_camera2_hdr_mode_entry_multi_frame" translatable="true">Multi-frame</string>
+    <string name="pref_camera2_hdr_mode_entry_sensor" translatable="true">Sensor</string>
+    <string name="pref_camera2_hdr_mode_entry_value_multi_frame" translatable="false">0</string>
+    <string name="pref_camera2_hdr_mode_entry_value_sensor" translatable="false">1</string>
+
 </resources>
 

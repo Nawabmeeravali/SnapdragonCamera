@@ -202,8 +202,6 @@ public class CaptureModule implements CameraModule, PhotoController,
      * Camera state: Focus and exposure has been locked and converged.
      */
     private static final int STATE_AF_AE_LOCKED = 6;
-    private static final int STATE_WAITING_AF_LOCKING = 7;
-    private static final int STATE_WAITING_AF_PRECAPTURE_LOCK = 8;
     private static final String TAG = "SnapCam_CaptureModule";
 
     // Used for check memory status for longshot mode
@@ -287,6 +285,24 @@ public class CaptureModule implements CameraModule, PhotoController,
             "org.codeaurora.qcamera3.bokeh.blurLevel", Integer.class);
     public static final CaptureResult.Key<Integer> bokeh_status =
             new CaptureResult.Key<>("org.codeaurora.qcamera3.bokeh.status", Integer.class);
+    public static final CaptureRequest.Key<Integer> sharpness_control = new CaptureRequest.Key<>(
+            "org.codeaurora.qcamera3.sharpness.strength", Integer.class);
+    public static final CaptureRequest.Key<Integer> exposure_metering = new CaptureRequest.Key<>(
+            "org.codeaurora.qcamera3.exposure_metering.exposure_metering_mode", Integer.class);
+    public static final CaptureRequest.Key<Byte> earlyPCR =
+            new CaptureRequest.Key<>("org.quic.camera.EarlyPCRenable.EarlyPCRenable", byte.class);
+
+    public static CameraCharacteristics.Key<int[]> ISO_AVAILABLE_MODES =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.iso_exp_priority.iso_available_modes", int[].class);
+
+    // manual WB color temperature and gains
+    public static CameraCharacteristics.Key<int[]> WB_COLOR_TEMPERATURE_RANGE =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.manualWB.color_temperature_range", int[].class);
+    public static CameraCharacteristics.Key<float[]> WB_RGB_GAINS_RANGE =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.manualWB.gains_range", float[].class);
+
+    public static CameraCharacteristics.Key<long[]> EXPOSURE_RANGE =
+            new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.iso_exp_priority.exposure_time_range", long[].class);
 
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
@@ -601,7 +617,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         CaptureResult partialResult) {
             int id = (int) partialResult.getRequest().getTag();
             if (id == getMainCameraId()) {
-                updateFocusStateChange(partialResult);
                 Face[] faces = partialResult.get(CaptureResult.STATISTICS_FACES);
                 if (faces != null && isBsgcDetecionOn()) {
                     updateFaceView(faces, getBsgcInfo(partialResult, faces.length));
@@ -852,10 +867,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 Log.d(TAG, "STATE_WAITING_AE_LOCK id: " + id + " afState: " + afState + " aeState:" + aeState);
-                if ((afState != null &&
-                        (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                        CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState)) &&
-                        (aeState != null || aeState == CaptureResult.CONTROL_AE_STATE_LOCKED)) {
+                if (aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_LOCKED) {
                     checkAfAeStatesAndCapture(id);
                 }
                 break;
@@ -870,30 +882,6 @@ public class CaptureModule implements CameraModule, PhotoController,
                 Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
                 Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                 Log.d(TAG, "STATE_WAITING_TOUCH_FOCUS id: " + id + " afState:" + afState + " aeState:" + aeState);
-                break;
-            }
-            case STATE_WAITING_AF_LOCKING: {
-                parallelLockAFAndPreCapture(getMainCameraId());
-                break;
-            }
-            case STATE_WAITING_AF_PRECAPTURE_LOCK: {
-                Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                Log.d(TAG, "STATE_WAITING_AF_PRECAPTURE_LOCK id: " + id + " afState: " + afState +
-                        " aeState:" + aeState);
-
-                if ((aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED)) {
-                    if (isFlashOn(id)) {
-                        // if flash is on and AE state is CONVERGED then lock AE
-                        lockExposure(id);
-                        break;
-                    }
-                }
-
-                if (aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                        (aeState != null && aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED)) {
-                    lockExposure(id);
-                }
                 break;
             }
         }
@@ -1515,7 +1503,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
                             captureStillPicture(BAYER_ID);
                         } else {
-                            parallelLockAFAndPreCapture(BAYER_ID);
+                            lockFocus(BAYER_ID);
                         }
                         break;
                     case MONO_MODE:
@@ -1574,61 +1562,6 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     public boolean isLongShotActive() {
         return mLongshotActive;
-    }
-
-    private void parallelLockAFAndPreCapture(int id) {
-        if (mActivity == null || mCameraDevice[id] == null
-                || !checkSessionAndBuilder(mCaptureSession[id], mPreviewRequestBuilder[id])) {
-            mUI.enableShutter(true);
-            warningToast("Camera is not ready yet to take a picture.");
-            return;
-        }
-        Log.d(TAG, "parallelLockAFAndPreCapture " + id);
-        try {
-            // start repeating request to get AF/AE state updates
-            // for mono when mono preview is off.
-            if(id == MONO_ID && !canStartMonoPreview()) {
-                mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
-                        .build(), mCaptureCallback, mCameraHandler);
-            } else {
-                // for longshot flash, need to re-configure the preview flash mode.
-                if (mLongshotActive && isFlashOn(id)) {
-                    mCaptureSession[id].stopRepeating();
-                    applyFlash(mPreviewRequestBuilder[id], id);
-                    if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
-                        setRepeatingBurstForZSL(id);
-                    } else {
-                        mCaptureSession[id].setRepeatingRequest(mPreviewRequestBuilder[id]
-                                .build(), mCaptureCallback, mCameraHandler);
-                    }
-                }
-            }
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-
-        mTakingPicture[id] = true;
-        if (mState[id] == STATE_WAITING_TOUCH_FOCUS) {
-            mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[id]);
-            mState[id] = STATE_WAITING_AF_LOCKING;
-            mLockRequestHashCode[id] = 0;
-            return;
-        }
-
-        try {
-            mState[id] = STATE_WAITING_AF_PRECAPTURE_LOCK;
-            CaptureRequest.Builder builder = getRequestBuilder(id);
-            builder.setTag(id);
-            addPreviewSurface(builder, null, id);
-            // lock AF and Precapture
-            applySettingsForLockAndPrecapture(builder, id);
-            CaptureRequest request = builder.build();
-            mLockRequestHashCode[id] = request.hashCode();
-            mCaptureSession[id].capture(request, mCaptureCallback, mCameraHandler);
-        } catch (CameraAccessException | IllegalStateException e) {
-            e.printStackTrace();
-        }
-
     }
 
     /**
@@ -2257,7 +2190,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             mTakingPicture[id] = false;
             enableShutterAndVideoOnUiThread(id);
         } catch (NullPointerException | IllegalStateException | CameraAccessException e) {
-            Log.w(TAG, "Session is already closed");
+            Log.w(TAG, "unlock exception occurred");
+            e.printStackTrace();
         }
     }
 
@@ -2432,16 +2366,6 @@ public class CaptureModule implements CameraModule, PhotoController,
             applyFlash(builder, id);
     }
 
-    private void applySettingsForLockAndPrecapture(CaptureRequest.Builder builder, int id) {
-        builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-        applyAFRegions(builder, id);
-        applyAERegions(builder, id);
-        builder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-        applyFlash(builder, id);
-        applyCommonSettings(builder, id);
-    }
-
     private void applySettingsForLockExposure(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_AE_LOCK, Boolean.TRUE);
     }
@@ -2490,6 +2414,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void applyCommonSettings(CaptureRequest.Builder builder, int id) {
         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         builder.set(CaptureRequest.CONTROL_AF_MODE, mControlAFMode);
+        applyAfModes(builder);
         applyFaceDetection(builder);
         applyWhiteBalance(builder);
         applyExposure(builder);
@@ -2500,8 +2425,13 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyInstantAEC(builder);
         applySaturationLevel(builder);
         applyAntiBandingLevel(builder);
+        applyDenoise(builder);
         applyHistogram(builder);
+        applySharpnessControlModes(builder);
+        applyExposureMeteringModes(builder);
+        applyEarlyPCR(builder);
         enableBokeh(builder);
+        applyWbColorTemperature(builder);
     }
 
     /**
@@ -2615,10 +2545,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         if(isClearSightOn()) {
             ClearSightImageProcessor.getInstance().close();
         }
+        mUI.hideSurfaceView();
         closeCamera();
         resetAudioMute();
         mUI.showPreviewCover();
-        mUI.hideSurfaceView();
         mFirstPreviewLoaded = false;
         stopBackgroundThread();
         mLastJpegData = null;
@@ -3818,6 +3748,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyFaceDetection(builder);
         applyZoom(builder, cameraId);
         applyVideoHDR(builder);
+        applyEarlyPCR(builder);
     }
 
     private void applyVideoHDR(CaptureRequest.Builder builder) {
@@ -4519,6 +4450,14 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private void applyDenoise(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_DENOISE);
+        if (value != null && value.equals("denoise-off")) {
+            request.set(CaptureRequest.NOISE_REDUCTION_MODE,
+                    CameraMetadata.NOISE_REDUCTION_MODE_OFF);
+        }
+    }
+
     private void applyHistogram(CaptureRequest.Builder request) {
         String value = mSettingsManager.getValue(SettingsManager.KEY_HISTOGRAM);
         if (value != null ) {
@@ -4533,6 +4472,49 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
         mHiston = false;
         updateGraghViewVisibility(View.GONE);
+    }
+
+    private void applySharpnessControlModes(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_SHARPNESS_CONTROL_MODE);
+        if (value != null) {
+            int intValue = Integer.parseInt(value);
+            try {
+                request.set(CaptureModule.sharpness_control, intValue);
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void applyAfModes(CaptureRequest.Builder request) {
+        if (getDevAfMode() != -1) {
+            request.set(CaptureRequest.CONTROL_AF_MODE, getDevAfMode());
+        }
+    }
+
+    private int getDevAfMode() {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_AF_MODE);
+        int intValue = -1;
+        if (value != null) {
+            intValue = Integer.parseInt(value);
+        }
+        return intValue;
+    }
+
+    private void applyExposureMeteringModes(CaptureRequest.Builder request) {
+        String value = mSettingsManager.getValue(SettingsManager.KEY_EXPOSURE_METERING_MODE);
+        if (value != null) {
+            int intValue = Integer.parseInt(value);
+            request.set(CaptureModule.exposure_metering, intValue);
+        }
+    }
+
+    private void applyEarlyPCR(CaptureRequest.Builder request) {
+        try {
+            request.set(CaptureModule.earlyPCR, (byte) (mHighSpeedCapture ? 0x00 : 0x01));
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
     }
 
     private void enableBokeh(CaptureRequest.Builder request) {
@@ -4750,6 +4732,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyIso(CaptureRequest.Builder request) {
         String value = mSettingsManager.getValue(SettingsManager.KEY_ISO);
+        if (applyManualIsoExposure(request)) return;
         if (value == null) return;
         if (value.equals("auto")) {
             VendorTagUtil.setIsoExpPrioritySelectPriority(request, 0);
@@ -4773,6 +4756,106 @@ public class CaptureModule implements CameraModule, PhotoController,
             request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, null);
             request.set(CaptureRequest.SENSOR_SENSITIVITY, null);
         }
+    }
+
+    private boolean applyManualIsoExposure(CaptureRequest.Builder request) {
+        boolean result = false;
+        final SharedPreferences pref = mActivity.getSharedPreferences(
+                ComboPreferences.getLocalSharedPreferencesName(mActivity, getMainCameraId()),
+                Context.MODE_PRIVATE);
+        String isoPriority = mActivity.getString(
+                R.string.pref_camera_manual_exp_value_ISO_priority);
+        String expTimePriority = mActivity.getString(
+                R.string.pref_camera_manual_exp_value_exptime_priority);
+        String userSetting = mActivity.getString(
+                R.string.pref_camera_manual_exp_value_user_setting);
+        String gainsPriority = mActivity.getString(
+                R.string.pref_camera_manual_exp_value_gains_priority);
+        String manualExposureMode = mSettingsManager.getValue(SettingsManager.KEY_MANUAL_EXPOSURE);
+        if (manualExposureMode == null) return result;
+        if (manualExposureMode.equals(isoPriority)) {
+            long isoValue = Long.parseLong(pref.getString(SettingsManager.KEY_MANUAL_ISO_VALUE,
+                    "100"));
+            VendorTagUtil.setIsoExpPrioritySelectPriority(request, 0);
+            long intValue = SettingsManager.KEY_ISO_INDEX.get(
+                    SettingsManager.MAUNAL_ABSOLUTE_ISO_VALUE);
+            VendorTagUtil.setIsoExpPriority(request, intValue);
+            VendorTagUtil.setUseIsoValues(request, isoValue);
+            if (DEBUG) {
+                Log.v(TAG, "manual ISO value :" + isoValue);
+            }
+            if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) != null) {
+                mIsoExposureTime = request.get(CaptureRequest.SENSOR_EXPOSURE_TIME);
+            }
+            if (request.get(CaptureRequest.SENSOR_SENSITIVITY) != null) {
+                mIsoSensitivity = request.get(CaptureRequest.SENSOR_SENSITIVITY);
+            }
+            request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, null);
+            request.set(CaptureRequest.SENSOR_SENSITIVITY, null);
+            result = true;
+        } else if (manualExposureMode.equals(expTimePriority)) {
+            long newExpTime = -1;
+            String expTime = pref.getString(SettingsManager.KEY_MANUAL_EXPOSURE_VALUE, "0");
+            try {
+                newExpTime = Long.parseLong(expTime);
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "Input expTime " + expTime + " is invalid");
+                newExpTime = Long.parseLong(expTime);
+            }
+
+            if (DEBUG) {
+                Log.v(TAG, "manual Exposure value :" + newExpTime);
+            }
+            VendorTagUtil.setIsoExpPrioritySelectPriority(request, 1);
+            VendorTagUtil.setIsoExpPriority(request, newExpTime);
+            request.set(CaptureRequest.SENSOR_SENSITIVITY, null);
+            result = true;
+        } else if (manualExposureMode.equals(userSetting)) {
+            mSettingsManager.setValue(SettingsManager.KEY_FLASH_MODE, "off");
+            request.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+            request.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+            int isoValue = Integer.parseInt(pref.getString(SettingsManager.KEY_MANUAL_ISO_VALUE,
+                    "100"));
+            long newExpTime = -1;
+            String expTime = pref.getString(SettingsManager.KEY_MANUAL_EXPOSURE_VALUE, "0");
+            try {
+                newExpTime = Long.parseLong(expTime);
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "Input expTime " + expTime + " is invalid");
+                newExpTime = Long.parseLong(expTime);
+            }
+            if (DEBUG) {
+                Log.v(TAG, "manual ISO value : " + isoValue + ", Exposure value :" + newExpTime);
+            }
+            request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, newExpTime);
+            request.set(CaptureRequest.SENSOR_SENSITIVITY, isoValue);
+            result = true;
+        } else if (manualExposureMode.equals(gainsPriority)) {
+            float gains = pref.getFloat(SettingsManager.KEY_MANUAL_GAINS_VALUE, 1.0f);
+            int[] isoRange = mSettingsManager.getIsoRangeValues(getMainCameraId());
+            VendorTagUtil.setIsoExpPrioritySelectPriority(request, 0);
+            int isoValue = 100;
+            if (isoRange!= null) {
+                isoValue  = (int) (gains * isoRange[0]);
+            }
+            long intValue = SettingsManager.KEY_ISO_INDEX.get(
+                    SettingsManager.MAUNAL_ABSOLUTE_ISO_VALUE);
+            VendorTagUtil.setIsoExpPriority(request, intValue);
+            VendorTagUtil.setUseIsoValues(request, isoValue);
+            if (DEBUG) {
+                Log.v(TAG, "manual Gain value :" + isoValue);
+            }
+            if (request.get(CaptureRequest.SENSOR_EXPOSURE_TIME) != null) {
+                mIsoExposureTime = request.get(CaptureRequest.SENSOR_EXPOSURE_TIME);
+            }
+            if (request.get(CaptureRequest.SENSOR_SENSITIVITY) != null) {
+                mIsoSensitivity = request.get(CaptureRequest.SENSOR_SENSITIVITY);
+            }
+            request.set(CaptureRequest.SENSOR_EXPOSURE_TIME, null);
+            request.set(CaptureRequest.SENSOR_SENSITIVITY, null);
+            result = true;
+        }
+        return result;
     }
 
     private void applyColorEffect(CaptureRequest.Builder request) {
@@ -5640,6 +5723,39 @@ public class CaptureModule implements CameraModule, PhotoController,
     boolean checkSessionAndBuilder(CameraCaptureSession session, CaptureRequest.Builder builder) {
         return session != null && builder != null;
     }
+
+    private void applyWbColorTemperature(CaptureRequest.Builder request) {
+        final SharedPreferences pref = mActivity.getSharedPreferences(
+                ComboPreferences.getLocalSharedPreferencesName(mActivity, getMainCameraId()),
+                Context.MODE_PRIVATE);
+        String manualWBMode = pref.getString(SettingsManager.KEY_MANUAL_WB, "off");
+        String cctMode = mActivity.getString(
+                R.string.pref_camera_manual_wb_value_color_temperature);
+        String gainMode = mActivity.getString(
+                R.string.pref_camera_manual_wb_value_rbgb_gains);
+        if (manualWBMode.equals(cctMode)) {
+            int colorTempValue = Integer.parseInt(pref.getString(
+                    SettingsManager.KEY_MANUAL_WB_TEMPERATURE_VALUE, "-1"));
+            if (colorTempValue != -1) {
+                VendorTagUtil.setWbColorTemperatureValue(request, colorTempValue);
+            }
+        } else if (manualWBMode.equals(gainMode)) {
+            float rGain = pref.getFloat(SettingsManager.KEY_MANUAL_WB_R_GAIN, -1.0f);
+            float gGain = pref.getFloat(SettingsManager.KEY_MANUAL_WB_G_GAIN, -1.0f);
+            float bGain = pref.getFloat(SettingsManager.KEY_MANUAL_WB_B_GAIN, -1.0f);
+            if (rGain != -1.0 && gGain != -1.0 && bGain != -1.0f) {
+                request.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF);
+                float[] gains = {rGain, gGain, bGain};
+                VendorTagUtil.setMWBGainsValue(request, gains);
+            }
+        } else {
+            VendorTagUtil.setWbColorTemperatureValue(request, 5000);
+            float[] gains = {2.0f, 3.0f, 2.5f};
+            VendorTagUtil.setMWBGainsValue(request, gains);
+            VendorTagUtil.setMWBDisableMode(request);
+        }
+    }
+
 }
 
 class Camera2GraphView extends View {
