@@ -1997,6 +1997,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 warningToast("Camera is not ready yet to take a video snapshot.");
                 return;
             }
+            mUI.enableShutter(false);
             checkAndPlayShutterSound(id);
             CaptureRequest.Builder captureBuilder =
                     mCameraDevice[id].createCaptureRequest(CameraDevice.TEMPLATE_VIDEO_SNAPSHOT);
@@ -2347,6 +2348,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                         mActivity.updateThumbnail(bytes);
                         image.close();
+                        mUI.enableShutter(true);
                     }
                 }, mImageAvailableHandler);
     }
