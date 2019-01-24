@@ -238,6 +238,7 @@ public class PostProcessor{
                     }
 
                     if(mIsZSLFallOff) {
+                        if (mZSLQueue == null) return;
                         ZSLQueue.ImageItem foundImage = mZSLQueue.tryToGetMatchingItem();
                         if (foundImage != null) {
                             reprocessImage(foundImage.getImage(),foundImage.getMetadata());
