@@ -2175,7 +2175,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                             && i == getMainCameraId()) {
                         Size pictureSize = mPictureSize;
                         if (mPostProcessor.isZSLEnabled() &&
-                                mPictureSize.getWidth() * mPictureSize.getHeight() < 2592 * 1944) {
+                                mPictureSize.getWidth() * mPictureSize.getHeight() < 2592 * 1944 &&
+                                !mSettingsManager.getIsSupportedQcfa(i)) {
                             // if picture size < 5M , fix to 5M
                             pictureSize = new Size(2592, 1944);
                         }
