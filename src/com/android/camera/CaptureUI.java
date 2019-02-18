@@ -65,6 +65,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import com.android.camera.imageprocessor.filter.BeautificationFilter;
 import com.android.camera.ui.AutoFitSurfaceView;
 import com.android.camera.ui.Camera2FaceView;
 import com.android.camera.ui.CameraControls;
@@ -560,7 +561,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
             public void run() {
                 if(value != null && !value.equals("0")) {
                     mMakeupButton.setImageResource(R.drawable.beautify_on);
-                    mMakeupSeekBarLayout.setVisibility(View.VISIBLE);
+                    mMakeupSeekBarLayout.setVisibility(View.GONE);
                 } else {
                     mMakeupButton.setImageResource(R.drawable.beautify);
                     mMakeupSeekBarLayout.setVisibility(View.GONE);
@@ -943,7 +944,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mSceneModeSwitcher.setVisibility(View.INVISIBLE);
         String value = mSettingsManager.getValue(SettingsManager.KEY_MAKEUP);
         if(value != null && value.equals("0")) {
-            mMakeupButton.setVisibility(View.INVISIBLE);
+            mMakeupButton.setVisibility(View.GONE);
         }
         mIsVideoUI = true;
         mPauseButton.setVisibility(View.VISIBLE);
@@ -954,7 +955,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setVisibility(View.VISIBLE);
         mFilterModeSwitcher.setVisibility(View.VISIBLE);
         mSceneModeSwitcher.setVisibility(View.VISIBLE);
-        mMakeupButton.setVisibility(View.VISIBLE);
+        mMakeupButton.setVisibility(View.GONE);
         mIsVideoUI = false;
         mPauseButton.setVisibility(View.INVISIBLE);
         //exit recording mode needs to refresh scene mode label.
@@ -1179,7 +1180,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         if (mSceneModeSwitcher != null) mSceneModeSwitcher.setVisibility(status);
         if (mFilterModeSwitcher != null) mFilterModeSwitcher.setVisibility(status);
         if (mFilterModeSwitcher != null) mFilterModeSwitcher.setVisibility(status);
-        if (mMakeupButton != null) mMakeupButton.setVisibility(status);
+        if (mMakeupButton != null) mMakeupButton.setVisibility(View.GONE);
     }
 
     public void initializeControlByIntent() {
@@ -1242,8 +1243,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
              enableMakeupMenu = false;
              enableFilterMenu = false;
         }
-
         mMakeupButton.setEnabled(enableMakeupMenu);
+        if(!BeautificationFilter.isSupportedStatic()) {
+            mMakeupButton.setVisibility(View.GONE);
+        }
         mFilterModeSwitcher.setEnabled(enableFilterMenu);
         mSceneModeSwitcher.setEnabled(enableSceneMenu);
     }

@@ -230,7 +230,7 @@ public class OneUICameraControls extends RotatableLayout {
 
         mViews = new View[]{
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
-                mTsMakeupSwitcher, mFlashButton, mShutter, mPreview, mVideoShutter,
+                mFlashButton, mShutter, mPreview, mVideoShutter,
                 mPauseButton, mCancelButton
         };
         mBottomLargeSize = getResources().getDimensionPixelSize(
@@ -239,6 +239,7 @@ public class OneUICameraControls extends RotatableLayout {
                 R.dimen.one_ui_bottom_small);
         if(!BeautificationFilter.isSupportedStatic()) {
             mTsMakeupSwitcher.setEnabled(false);
+            mTsMakeupSwitcher.setVisibility(View.GONE);
         }
         setProModeParameters();
     }
@@ -332,16 +333,14 @@ public class OneUICameraControls extends RotatableLayout {
         setLocation(mFilterModeSwitcher, true, 1);
         if (mIsVideoMode) {
             setLocation(mMute, true, 2);
-            setLocation(mTsMakeupSwitcher, true, 3);
-            setLocation(mFlashButton, true, 4);
+            setLocation(mFlashButton, true, 3);
             setLocation(mPauseButton, false, 3.15f);
             setLocation(mShutter, false , 0.85f);
             setLocation(mVideoShutter, false, 2);
             setLocation(mExitBestPhotpMode ,false, 4);
         } else {
             setLocation(mFrontBackSwitcher, true, 2);
-            setLocation(mTsMakeupSwitcher, true, 3);
-            setLocation(mFlashButton, true, 4);
+            setLocation(mFlashButton, true, 3);
             if (mIntentMode == CaptureModule.INTENT_MODE_CAPTURE) {
                 setLocation(mShutter, false, 2);
                 setLocation(mCancelButton, false, 0.85f);
@@ -492,7 +491,7 @@ public class OneUICameraControls extends RotatableLayout {
         mOrientation = orientation;
         View[] views = {
                 mSceneModeSwitcher, mFilterModeSwitcher, mFrontBackSwitcher,
-                mTsMakeupSwitcher, mFlashButton, mPreview, mMute, mShutter, mVideoShutter,
+                mFlashButton, mPreview, mMute, mShutter, mVideoShutter,
                 mMakeupSeekBarLowText, mMakeupSeekBarHighText, mPauseButton, mExitBestPhotpMode
         };
 
