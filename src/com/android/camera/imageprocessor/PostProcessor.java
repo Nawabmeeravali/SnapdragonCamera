@@ -678,7 +678,8 @@ public class PostProcessor{
                                   SettingsManager.KEY_SCENE_MODE)) &&
                    !"1".equals(SettingsManager.getInstance().getValue(SettingsManager.KEY_HDR_MODE)))
                 || mController.getCameraMode() == CaptureModule.DUAL_MODE
-                || isSupportedQcfa) {
+                || isSupportedQcfa
+                || SettingsManager.getInstance().getSavePictureFormat() == SettingsManager.HEIF_FORMAT){
             mUseZSL = false;
         } else {
             mUseZSL = true;
