@@ -3751,6 +3751,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         CameraConstrainedHighSpeedCaptureSession session =
                                     (CameraConstrainedHighSpeedCaptureSession) mCurrentSession;
                         try {
+                            setUpVideoCaptureRequestBuilder(mVideoRequestBuilder, cameraId);
                             removeImageReaderSurfaces(mVideoRequestBuilder);
                             List list = session 
                                     .createHighSpeedRequestList(mVideoRequestBuilder.build());
