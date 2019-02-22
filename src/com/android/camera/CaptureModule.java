@@ -938,12 +938,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         mCaptureHDRTestEnable = false;
     }
 
-    public void startFaceDetection() {
-            mUI.onStartFaceDetection(mDisplayOrientation,
-                    mSettingsManager.isFacingFront(getMainCameraId()),
-                    mSettingsManager.getSensorActiveArraySize(getMainCameraId()));
-    }
-
     private boolean canStartMonoPreview() {
         return getCameraMode() == MONO_MODE ||
                 (getCameraMode() == DUAL_MODE && isMonoPreviewOn());
@@ -5453,6 +5447,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 else {
                     mUI.onStartFaceDetection(mDisplayOrientation,
                             mSettingsManager.isFacingFront(getMainCameraId()),
+                            mCropRegion[getMainCameraId()],
                             mSettingsManager.getSensorActiveArraySize(getMainCameraId()));
                 }
             }
