@@ -2968,6 +2968,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             @Override
             public void run() {
                 mActivity.updateStorageSpaceAndHint();
+                mActivity.updateThumbnail(false);
             }
         });
         mUI.enableShutter(true);
