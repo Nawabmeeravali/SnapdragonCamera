@@ -559,6 +559,10 @@ public class OneUICameraControls extends RotatableLayout {
         resetProModeIcons();
     }
 
+    public void setFixedFocus(boolean fixedFocus) {
+        mManualText.setEnabled(!fixedFocus);
+    }
+
     public int getPromode() {
         return mProMode != null ? mProMode.getMode() : -99;
     }
