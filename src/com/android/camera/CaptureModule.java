@@ -4884,6 +4884,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void applySceneMode(CaptureRequest.Builder request) {
         String value = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         String autoHdr = mSettingsManager.getValue(SettingsManager.KEY_AUTO_HDR);
+        String fdValue = mSettingsManager.getValue(SettingsManager.KEY_FACE_DETECTION);
         if (value == null) return;
         int mode = Integer.parseInt(value);
         if (autoHdr != null && "enable".equals(autoHdr) && "0".equals(value)) {
@@ -4905,7 +4906,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_USE_SCENE_MODE);
         } else if (mode == SettingsManager.SCENE_MODE_BOKEH_INT){
             setSceneModeForBokeh(request);
-        } else {
+        } else if (!(fdValue != null && fdValue.equals("on"))){
             request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
         }
     }
@@ -5109,6 +5110,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (value != null && value.equals("on")) {
             request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
                     CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE);
+            request.set(CaptureRequest.CONTROL_SCENE_MODE,
+                    CaptureRequest.CONTROL_SCENE_MODE_FACE_PRIORITY);
+            request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_USE_SCENE_MODE);
         }
     }
 
