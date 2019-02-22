@@ -602,6 +602,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
 
     public void initializeProMode(boolean promode) {
         mCameraControls.setProMode(promode);
+        mCameraControls.setFixedFocus(mSettingsManager.isFixedFocus(mModule.getMainCameraId()));
         if (promode)
             mVideoButton.setVisibility(View.INVISIBLE);
         else if (mModule.getCurrentIntentMode() == CaptureModule.INTENT_MODE_NORMAL)
