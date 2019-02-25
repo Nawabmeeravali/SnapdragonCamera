@@ -744,6 +744,8 @@ public class VideoModule implements CameraModule,
                 doReturnToCaller(!recordFail);
             } else if (!recordFail) {
                 showCaptureResult();
+            } else if (recordFail) {
+                mUI.enableShutter(true);
             }
         } else if (!recordFail){
             // Start capture animation.
