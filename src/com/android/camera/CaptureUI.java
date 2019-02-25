@@ -1390,8 +1390,17 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         showUIAfterCountDown();
     }
 
-    public void startCountDown(int sec, boolean playSound) {
+    public void initCountDownView() {
         if (mCountDownView == null) initializeCountDown();
+    }
+
+    public void releaseSoundPool() {
+        if (mCountDownView != null) {
+            mCountDownView.releaseSoundPool();
+        }
+    }
+
+    public void startCountDown(int sec, boolean playSound) {
         mCountDownView.startCountDown(sec, playSound);
         hideUIWhileCountDown();
     }
