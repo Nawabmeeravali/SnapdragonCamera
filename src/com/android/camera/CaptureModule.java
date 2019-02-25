@@ -3751,6 +3751,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mUI.hideSurfaceView();
                 mUI.showSurfaceView();
             }
+            if (mHiston) {
+                updateGraghViewVisibility(View.GONE);
+            }
             mUI.resetTrackingFocus();
 
             createVideoSnapshotImageReader();
