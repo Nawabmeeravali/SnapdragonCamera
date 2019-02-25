@@ -1221,6 +1221,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                             if (mPaused || null == mCameraDevice[id]) {
                                 return;
                             }
+                            Log.d(TAG, "cameraCaptureSession - onConfigured " + id);
                             // When the session is ready, we start displaying the preview.
                             mCaptureSession[id] = cameraCaptureSession;
                             if(id == getMainCameraId()) {
@@ -5363,6 +5364,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                     updateVideoFlash();
                     return;
                 case SettingsManager.KEY_FLASH_MODE:
+                    String userSetting = mActivity.getString(
+                            R.string.pref_camera_manual_exp_value_user_setting);
+                    String manualExposureMode = mSettingsManager.getValue(
+                            SettingsManager.KEY_MANUAL_EXPOSURE);
+                    if (manualExposureMode.equals(userSetting)) {
+                        return;
+                    }
                 case SettingsManager.KEY_ZSL:
                 case SettingsManager.KEY_AUTO_HDR:
                 case SettingsManager.KEY_SAVERAW:

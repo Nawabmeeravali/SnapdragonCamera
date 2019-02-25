@@ -110,31 +110,31 @@ public class SettingsActivity extends PreferenceActivity {
                 Preference pref = findPreference(state.key);
                 if (pref != null) {
                     pref.setEnabled(enabled);
-                }
-                if (pref.getKey().equals(SettingsManager.KEY_QCFA)) {
-                    mSettingsManager.updateQcfaPictureSize();
-                    updatePreference(SettingsManager.KEY_PICTURE_SIZE);
-                }
-
-                if (pref.getKey().equals(SettingsManager.KEY_VIDEO_HDR_VALUE)) {
-                    ListPreference autoHdrPref = (ListPreference) findPreference(
-                            mSettingsManager.KEY_AUTO_HDR);
-                    if (pref.getSummary().equals("enable")) {
-                        // when enable the Video HDR, app will disable the AUTO HDR.
-                        autoHdrPref.setEnabled(false);
-                        autoHdrPref.setValue("disable");
-                        mSettingsManager.setValue(mSettingsManager.KEY_AUTO_HDR, "disable");
-                    } else {
-                        autoHdrPref.setEnabled(true);
+                    if (pref.getKey().equals(SettingsManager.KEY_QCFA)) {
+                        mSettingsManager.updateQcfaPictureSize();
+                        updatePreference(SettingsManager.KEY_PICTURE_SIZE);
                     }
-                }
 
-                if ((pref.getKey().equals(SettingsManager.KEY_MANUAL_WB))) {
-                    updateManualWBSettings();
-                }
+                    if (pref.getKey().equals(SettingsManager.KEY_VIDEO_HDR_VALUE)) {
+                        ListPreference autoHdrPref = (ListPreference) findPreference(
+                                mSettingsManager.KEY_AUTO_HDR);
+                        if (pref.getSummary().equals("enable")) {
+                            // when enable the Video HDR, app will disable the AUTO HDR.
+                            autoHdrPref.setEnabled(false);
+                            autoHdrPref.setValue("disable");
+                            mSettingsManager.setValue(mSettingsManager.KEY_AUTO_HDR, "disable");
+                        } else {
+                            autoHdrPref.setEnabled(true);
+                        }
+                    }
 
-                if (pref.getKey().equals(SettingsManager.KEY_MANUAL_EXPOSURE)) {
-                    UpdateManualExposureSettings();
+                    if ((pref.getKey().equals(SettingsManager.KEY_MANUAL_WB))) {
+                        updateManualWBSettings();
+                    }
+
+                    if (pref.getKey().equals(SettingsManager.KEY_MANUAL_EXPOSURE)) {
+                        UpdateManualExposureSettings();
+                    }
                 }
             }
         }
