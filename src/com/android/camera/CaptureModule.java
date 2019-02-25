@@ -1774,7 +1774,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     }
                 }
 
-                if(mPaused || !mCamerasOpened) {
+                if(mPaused || !mCamerasOpened || (mCurrentSession == null)) {
                     //for avoid occurring crash when click back before capture finished.
                     //CameraDevice was already closed
                     return;
