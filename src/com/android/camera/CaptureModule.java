@@ -1806,7 +1806,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     //CameraDevice was already closed
                     return;
                 }
-                if (!mIsSupportedQcfa) {
+                if (!mIsSupportedQcfa && mUI.getCurrentProMode() != ProMode.MANUAL_MODE) {
                     mCaptureSession[id].stopRepeating();
                 }
                 if (mLongshotActive) {
