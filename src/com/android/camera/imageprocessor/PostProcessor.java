@@ -100,6 +100,7 @@ public class PostProcessor{
     public static final int FILTER_CHROMAFLASH = 6;
     public static final int FILTER_BLURBUSTER = 7;
     public static final int FILTER_MAX = 8;
+    public static final double FALLOFF_DELAY = 2 * 10e6;
 
     //BestPicture requires 10 which is the biggest among filters
     private static final int MAX_REQUIRED_IMAGE_NUM = 3;
@@ -239,10 +240,11 @@ public class PostProcessor{
 
                     if(mIsZSLFallOff) {
                         if (mZSLQueue == null) return;
-                        ZSLQueue.ImageItem foundImage = mZSLQueue.tryToGetMatchingItem();
-                        if (foundImage == null && mZSLFallOffResult != null) {
+                        ZSLQueue.ImageItem foundImage = null;
+                        if (mZSLFallOffResult != null) {
                             long timestamp = mZSLFallOffResult.get(CaptureResult.SENSOR_TIMESTAMP);
-                            foundImage = mZSLQueue.tryToGetFallOffImage(timestamp);
+                            foundImage = mZSLQueue.tryToGetFallOffImage(mZSLFallOffResult,
+                                    timestamp + FALLOFF_DELAY);
                         }
                         if (foundImage != null) {
                             reprocessImage(foundImage.getImage(),foundImage.getMetadata());
@@ -361,9 +363,8 @@ public class PostProcessor{
             }
             if(mIsZSLFallOff) {
                 mZSLFallOffResult = result;
-            } else {
-                onMetaAvailable(result);
             }
+            onMetaAvailable(result);
         }
 
         @Override
