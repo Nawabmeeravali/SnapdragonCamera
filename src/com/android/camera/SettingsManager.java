@@ -1424,7 +1424,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
             modes.add(String.valueOf(SCENE_MODE_BOKEH_INT));
         }
         for (int mode : sceneModes) {
-            modes.add(String.valueOf(mode));
+            //remove scene mode like "Sunset", "Night" such as
+            //modes.add(String.valueOf(mode));
         }
         return modes;
     }
