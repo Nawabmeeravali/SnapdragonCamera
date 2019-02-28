@@ -608,7 +608,7 @@
 
     <!-- Default picture quality setting. See
          pref_camera_jpegquality_entryvalues for possible values -->
-    <string name="pref_camera_jpegquality_default" translatable="false">85</string>
+    <string name="pref_camera_jpegquality_default" translatable="false">100</string>
 
     <!-- Default Picture format setting. Do not translate. -->
     <string name="pref_camera_picture_format_default">jpeg</string>
@@ -1112,7 +1112,7 @@
     <string name="pref_camera2_saturation_level_entry_10" translatable="true">Level 10</string>
 
     <string name="pref_camera2_anti_banding_level_title" translatable="true">Anti Banding Level</string>
-    <string name="pref_camera2_anti_banding_level_default" translatable="false">0</string>
+    <string name="pref_camera2_anti_banding_level_default" translatable="false">3</string>
     <string name="pref_camera2_anti_banding_level_entry_off" translatable="true">Off</string>
     <string name="pref_camera2_anti_banding_level_entry_50hz" translatable="true">50HZ</string>
     <string name="pref_camera2_anti_banding_level_entry_60hz" translatable="true">60HZ</string>
@@ -1227,7 +1227,7 @@
     <string name="pref_camera2_afmode_value_edof" translatable="false">5</string>
 
     <string name="pref_camera2_exposure_metering_title" translatable="true">ExposureMetering</string>
-    <string name="pref_camera2_exposure_metering_default" translatable="true">0</string>
+    <string name="pref_camera2_exposure_metering_default" translatable="true">1</string>
     <string name="pref_camera2_exposure_metering_entry_frame_average" translatable="false">FrameAverage</string>
     <string name="pref_camera2_exposure_metering_entry_center_weighted" translatable="false">CenterWeighted</string>
     <string name="pref_camera2_exposure_metering_entry_spot_meteting" translatable="false">SpotMeteting</string>
