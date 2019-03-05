@@ -3612,6 +3612,11 @@ public class CaptureModule implements CameraModule, PhotoController,
             Log.d(TAG, "Longshot button up");
             mLongshotActive = false;
             mPostProcessor.stopLongShot();
+            try{
+                setRepeatingBurstForZSL(getMainCameraId());
+            }catch (CameraAccessException|IllegalStateException e){
+                e.printStackTrace();
+            }
             mUI.enableVideo(!mLongshotActive);
         }
     }
@@ -4551,12 +4556,22 @@ public class CaptureModule implements CameraModule, PhotoController,
 
             if (isLongshotNeedCancel()) {
                 mLongshotActive = false;
+                try{
+                    setRepeatingBurstForZSL(getMainCameraId());
+                }catch (CameraAccessException|IllegalStateException e){
+                    e.printStackTrace();
+                }
                 mUI.enableVideo(!mLongshotActive);
                 return;
             }
 
             Log.d(TAG, "Start Longshot");
             mLongshotActive = true;
+            try{
+                setRepeatingBurstForZSL(getMainCameraId());
+            }catch (CameraAccessException|IllegalStateException e){
+                e.printStackTrace();
+            }
             mUI.enableVideo(!mLongshotActive);
             takePicture();
         }
@@ -5481,14 +5496,17 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
-    private void setRepeatingBurstForZSL(int id) throws CameraAccessException,IllegalStateException{
+    private void setRepeatingBurstForZSL(int id)
+            throws CameraAccessException,IllegalStateException{
         List<CaptureRequest> requests =
                 new ArrayList<CaptureRequest>();
         CaptureRequest previewZslRequest = mPreviewRequestBuilder[id].build();
         mPreviewRequestBuilder[id].removeTarget(mImageReader[id].getSurface());
         CaptureRequest previewRequest = mPreviewRequestBuilder[id].build();
         requests.add(previewZslRequest);
-        requests.add(previewRequest);
+        if(!isLongShotActive()) {
+            requests.add(previewRequest);
+        }
         //restore the orginal request builder
         mPreviewRequestBuilder[id].addTarget(mImageReader[id].getSurface());
 
