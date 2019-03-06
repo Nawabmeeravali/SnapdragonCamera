@@ -382,4 +382,14 @@ public class ProMode extends View {
         }
     }
 
+    public void resetEVandWB(){
+        if (mSettingsManager != null) {
+            String defaultEV = getResources().getString(
+                    R.string.pref_exposure_default);
+            String defualtWB = getResources().getString(
+                    R.string.pref_camera2_whitebalance_default);
+            mSettingsManager.setValue(SettingsManager.KEY_EXPOSURE,defaultEV);
+            mSettingsManager.setValue(SettingsManager.KEY_WHITE_BALANCE,defualtWB);
+        }
+    }
 }
