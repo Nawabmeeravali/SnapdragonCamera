@@ -446,6 +446,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private boolean mHighSpeedRecordingMode = false; //HFR
     private int mHighSpeedCaptureRate;
     private boolean mBokehEnabled = false;
+    private boolean mCameraModeSwitcherAllowed = true;
     private CaptureRequest.Builder mBokehRequestBuilder;
     private CaptureRequest.Builder mVideoRequestBuilder;
 
@@ -1223,6 +1224,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                                 return;
                             }
                             Log.d(TAG, "cameraCaptureSession - onConfigured " + id);
+                            setCameraModeSwitcherAllowed(true);
                             // When the session is ready, we start displaying the preview.
                             mCaptureSession[id] = cameraCaptureSession;
                             if(id == getMainCameraId()) {
@@ -1274,6 +1276,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         @Override
                         public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
                             Log.e(TAG, "cameracapturesession - onConfigureFailed "+ id);
+                            setCameraModeSwitcherAllowed(true);
                             if (mActivity.isFinishing()) {
                                 return;
                             }
@@ -1294,6 +1297,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         @Override
                         public void onClosed(CameraCaptureSession session) {
                             Log.d(TAG, "cameracapturesession - onClosed");
+                            setCameraModeSwitcherAllowed(true);
                         }
                     };
             waitForPreviewSurfaceReady();
@@ -1377,10 +1381,14 @@ public class CaptureModule implements CameraModule, PhotoController,
                 mCameraDevice[id].createCaptureSession(list, captureSessionCallback, null);
             }
         } catch (CameraAccessException e) {
+            // we can't use finally for this method, as we have to wait for callback if no error
+            setCameraModeSwitcherAllowed(true);
         } catch (IllegalStateException e) {
             Log.v(TAG, "createSession: mPaused status occur Time out waiting for surface ");
+            setCameraModeSwitcherAllowed(true);
         } catch (NullPointerException e) {
             Log.e(TAG,"NullPointerException occurred error ="+e.getMessage());
+            setCameraModeSwitcherAllowed(true);
         }
     }
 
@@ -3709,10 +3717,11 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private boolean startRecordingVideo(final int cameraId) {
-        if (null == mCameraDevice[cameraId]) {
+        if (null == mCameraDevice[cameraId] || !getCameraModeSwitcherAllowed()) {
             return false;
         }
         Log.d(TAG, "StartRecordingVideo " + cameraId);
+        setCameraModeSwitcherAllowed(false);
         mStartRecPending = true;
         mIsRecordingVideo = true;
         mMediaRecorderPausing = false;
@@ -3790,6 +3799,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                     @Override
                     public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                        setCameraModeSwitcherAllowed(true);
                         mCurrentSession = cameraCaptureSession;
                         mCaptureSession[cameraId] = cameraCaptureSession;
                         CameraConstrainedHighSpeedCaptureSession session =
@@ -3832,6 +3842,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                     @Override
                     public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                        setCameraModeSwitcherAllowed(true);
                         Toast.makeText(mActivity, "Failed", Toast.LENGTH_SHORT).show();
                     }
                 }, null);
@@ -3843,6 +3854,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     @Override
                     public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                         Log.d(TAG, "StartRecordingVideo session onConfigured");
+                        setCameraModeSwitcherAllowed(true);
                         mCurrentSession = cameraCaptureSession;
                         mCaptureSession[cameraId] = cameraCaptureSession;
                         try {
@@ -3873,15 +3885,13 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                     @Override
                     public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                        setCameraModeSwitcherAllowed(true);
                         Toast.makeText(mActivity, "Video Failed", Toast.LENGTH_SHORT).show();
                     }
                 }, null);
             }
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (IllegalStateException e) {
+        } catch (CameraAccessException | IOException | IllegalStateException e) {
+            setCameraModeSwitcherAllowed(true);
             e.printStackTrace();
         }
         mStartRecPending = false;
@@ -4143,7 +4153,10 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void stopRecordingVideo(int cameraId) {
         Log.d(TAG, "stopRecordingVideo " + cameraId);
-
+        if (!getCameraModeSwitcherAllowed()) {
+            Log.d(TAG, "waiting for session config " + cameraId);
+            return;
+        }
         mStopRecPending = true;
         boolean shouldAddToMediaStoreNow = false;
         // Stop recording
@@ -6090,6 +6103,13 @@ public class CaptureModule implements CameraModule, PhotoController,
             VendorTagUtil.setMWBGainsValue(request, gains);
             VendorTagUtil.setMWBDisableMode(request);
         }
+    }
+
+    public void setCameraModeSwitcherAllowed(boolean allow) {
+        mCameraModeSwitcherAllowed = allow;
+    }
+    public boolean getCameraModeSwitcherAllowed() {
+        return mCameraModeSwitcherAllowed;
     }
 
 }
