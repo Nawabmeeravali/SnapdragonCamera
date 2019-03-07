@@ -5176,9 +5176,6 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (value != null && value.equals("on")) {
             request.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
                     CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE);
-            request.set(CaptureRequest.CONTROL_SCENE_MODE,
-                    CaptureRequest.CONTROL_SCENE_MODE_FACE_PRIORITY);
-            request.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_USE_SCENE_MODE);
         }
     }
 
