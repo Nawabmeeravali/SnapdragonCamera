@@ -3987,6 +3987,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 .CONTROL_AF_MODE_CONTINUOUS_VIDEO);
         builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
         applyVideoStabilization(builder);
+        applyAntiBandingLevel(builder);
         applyNoiseReduction(builder);
         applyColorEffect(builder);
         applyVideoFlash(builder);
