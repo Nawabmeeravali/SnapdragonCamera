@@ -719,6 +719,10 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
         mFrontBackSwitcher.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!mModule.getCameraModeSwitcherAllowed()) {
+                    return;
+                }
+                mModule.setCameraModeSwitcherAllowed(false);
                 removeFilterMenu(false);
 
                 String value = mSettingsManager.getValue(SettingsManager.KEY_CAMERA_ID);
