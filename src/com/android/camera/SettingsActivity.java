@@ -110,9 +110,11 @@ public class SettingsActivity extends PreferenceActivity {
                 Preference pref = findPreference(state.key);
                 if (pref != null) {
                     pref.setEnabled(enabled);
-                    if (pref.getKey().equals(SettingsManager.KEY_QCFA)) {
-                        mSettingsManager.updateQcfaPictureSize();
+                    if (pref.getKey().equals(SettingsManager.KEY_QCFA) ||
+                            pref.getKey().equals(SettingsManager.KEY_PICTURE_FORMAT)) {
+                        mSettingsManager.updatePictureAndVideoSize();
                         updatePreference(SettingsManager.KEY_PICTURE_SIZE);
+                        updatePreference(SettingsManager.KEY_VIDEO_QUALITY);
                     }
 
                     if (pref.getKey().equals(SettingsManager.KEY_VIDEO_HDR_VALUE)) {

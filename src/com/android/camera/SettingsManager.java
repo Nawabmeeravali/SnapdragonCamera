@@ -310,14 +310,23 @@ public class SettingsManager implements ListMenu.SettingsListener {
         notifyListeners(changed);
     }
 
-    public void updateQcfaPictureSize() {
+    public void updatePictureAndVideoSize() {
         ListPreference picturePref = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
+        ListPreference videoQualityPref = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
         if (picturePref != null) {
             picturePref.setEntries(mContext.getResources().getStringArray(
                     R.array.pref_camera2_picturesize_entries));
             picturePref.setEntryValues(mContext.getResources().getStringArray(
                     R.array.pref_camera2_picturesize_entryvalues));
             filterUnsupportedOptions(picturePref, getSupportedPictureSize(
+                    getCurrentCameraId()));
+        }
+        if (videoQualityPref != null) {
+            videoQualityPref.setEntries(mContext.getResources().getStringArray(
+                    R.array.pref_camera2_video_quality_entries));
+            videoQualityPref.setEntryValues(mContext.getResources().getStringArray(
+                    R.array.pref_camera2_video_quality_entryvalues));
+            filterUnsupportedOptions(videoQualityPref,getSupportedVideoSize(
                     getCurrentCameraId()));
         }
     }
@@ -356,6 +365,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
         initDependencyTable();
         initializeValueMap();
         filterChromaflashPictureSizeOptions();
+        filterHeifSizeOptions();
     }
 
     private Size parseSize(String value) {
@@ -860,6 +870,8 @@ public class SettingsManager implements ListMenu.SettingsListener {
             filterVideoEncoderOptions();
         } else if (pref.getKey().equals(KEY_SCENE_MODE)) {
             filterChromaflashPictureSizeOptions();
+        } else if (pref.getKey().equals(KEY_PICTURE_FORMAT)) {
+            filterHeifSizeOptions();
         }
     }
 
@@ -1023,7 +1035,22 @@ public class SettingsManager implements ListMenu.SettingsListener {
         }
     }
 
-    private void filterHFROptions() {
+    private void filterHeifSizeOptions() {
+        ListPreference picturePref = mPreferenceGroup.findPreference(KEY_PICTURE_SIZE);
+        ListPreference videoQualityPref = mPreferenceGroup.findPreference(KEY_VIDEO_QUALITY);
+        if (filterUnsupportedOptions(picturePref, getSupportedPictureSize(
+                getCurrentCameraId()))) {
+            mFilteredKeys.add(picturePref.getKey());
+        }
+        if (filterUnsupportedOptions(videoQualityPref, getSupportedVideoSize(
+                getCurrentCameraId()))) {
+            mFilteredKeys.add(videoQualityPref.getKey());
+        }
+    }
+
+
+
+private void filterHFROptions() {
         ListPreference hfrPref = mPreferenceGroup.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
         if (hfrPref != null) {
             hfrPref.reloadInitialEntriesAndEntryValues();
@@ -1290,6 +1317,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = map.getOutputSizes(ImageFormat.JPEG);
         List<String> res = new ArrayList<>();
+        boolean isHeifEnabled = getSavePictureFormat() == HEIF_FORMAT;
 
         if (getQcfaPrefEnabled() && getIsSupportedQcfa(cameraId)) {
             res.add(getSupportedQcfaDimension(cameraId));
@@ -1297,6 +1325,9 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
         if (sizes != null) {
             for (int i = 0; i < sizes.length; i++) {
+                if (isHeifEnabled && (Math.min(sizes[i].getWidth(),sizes[i].getHeight()) < 512)) {
+                    continue;
+                }
                 res.add(sizes[i].toString());
             }
         }
@@ -1332,8 +1363,12 @@ public class SettingsManager implements ListMenu.SettingsListener {
         StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = map.getOutputSizes(MediaRecorder.class);
+        boolean isHeifEnabled = getSavePictureFormat() == HEIF_FORMAT;
         List<String> res = new ArrayList<>();
         for (int i = 0; i < sizes.length; i++) {
+            if (isHeifEnabled && (Math.min(sizes[i].getWidth(),sizes[i].getHeight()) < 512)) {
+                continue;
+            }
             if (!CameraSettings.VIDEO_QUALITY_TABLE.containsKey(sizes[i].toString())) {
                 continue;
             }
