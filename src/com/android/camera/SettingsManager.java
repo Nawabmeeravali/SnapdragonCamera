@@ -85,6 +85,7 @@ public class SettingsManager implements ListMenu.SettingsListener {
 
     public static final int SCENE_MODE_AUTO_INT = 0;
     public static final int SCENE_MODE_NIGHT_INT = 5;
+    public static final int SCENE_MODE_HDR_INT = 18;
 
     // Custom-Scenemodes start from 100
     public static final int SCENE_MODE_CUSTOM_START = 100;
@@ -1424,8 +1425,10 @@ public class SettingsManager implements ListMenu.SettingsListener {
             modes.add(String.valueOf(SCENE_MODE_BOKEH_INT));
         }
         for (int mode : sceneModes) {
-            //remove scene mode like "Sunset", "Night" such as
-            //modes.add(String.valueOf(mode));
+            //remove scene mode like "Sunset", "Night" such as, only keep "HDR" mode
+            if (mode == SCENE_MODE_HDR_INT) {
+                modes.add(String.valueOf(mode));
+            }
         }
         return modes;
     }
