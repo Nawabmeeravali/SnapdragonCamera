@@ -193,14 +193,15 @@ public class ZSLQueue {
         return null;
     }
 
-    public ImageItem tryToGetFallOffImage(long timestamp) {
+    public ImageItem tryToGetFallOffImage(TotalCaptureResult captureResult,double timestamp) {
         synchronized (mLock) {
             int index = mImageHead;
             ImageItem item;
             do {
                 item = mBuffer[index];
-                if (item != null && item.isValid() &&
-                        timestamp < item.getMetadata().get(CaptureResult.SENSOR_TIMESTAMP)) {
+                if (item != null && item.isValid() && (
+                        captureResult.getFrameNumber() == item.getMetadata().getFrameNumber() ||
+                      timestamp < item.getMetadata().get(CaptureResult.SENSOR_TIMESTAMP))) {
                     mBuffer[index] = null;
                     return item;
                 }
