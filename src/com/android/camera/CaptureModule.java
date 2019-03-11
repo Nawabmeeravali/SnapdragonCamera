@@ -454,7 +454,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private static final int SELFIE_FLASH_DURATION = 680;
 
-    private MediaActionSound mSound;
+    private SoundClips.Player mSoundPlayer;
     private Size mSupportedMaxPictureSize;
     private Size mSupportedRawPictureSize;
 
@@ -2757,9 +2757,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mIsRecordingVideo) {
             stopRecordingVideo(getMainCameraId());
         }
-        if (mSound != null) {
-            mSound.release();
-            mSound = null;
+        if (mSoundPlayer != null) {
+            mSoundPlayer.release();
+            mSoundPlayer = null;
         }
         if (selfieThread != null) {
             selfieThread.interrupt();
@@ -2974,8 +2974,9 @@ public class CaptureModule implements CameraModule, PhotoController,
         updatePreviewSize();
         mCameraIdList = new ArrayList<>();
 
-        if (mSound == null) {
-            mSound = new MediaActionSound();
+        // Set up sound playback for shutter button, video record and video stop
+        if (mSoundPlayer == null) {
+            mSoundPlayer = SoundClips.getPlayer(mActivity);
         }
 
         updateSaveStorageState();
@@ -5223,9 +5224,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void checkAndPlayRecordSound(int id, boolean isStarted) {
         if (id == getMainCameraId()) {
             String value = mSettingsManager.getValue(SettingsManager.KEY_SHUTTER_SOUND);
-            if (value != null && value.equals("on") && mSound != null) {
-                mSound.play(isStarted? MediaActionSound.START_VIDEO_RECORDING
-                        : MediaActionSound.STOP_VIDEO_RECORDING);
+            if (value != null && value.equals("on") && mSoundPlayer != null) {
+                mSoundPlayer.play(isStarted? SoundClips.START_VIDEO_RECORDING
+                        : SoundClips.STOP_VIDEO_RECORDING);
             }
         }
     }
@@ -5233,8 +5234,8 @@ public class CaptureModule implements CameraModule, PhotoController,
     public void checkAndPlayShutterSound(int id) {
         if (id == getMainCameraId()) {
             String value = mSettingsManager.getValue(SettingsManager.KEY_SHUTTER_SOUND);
-            if (value != null && value.equals("on") && mSound != null) {
-                mSound.play(MediaActionSound.SHUTTER_CLICK);
+            if (value != null && value.equals("on") && mSoundPlayer != null) {
+                mSoundPlayer.play(SoundClips.SHUTTER_CLICK);
             }
         }
     }
