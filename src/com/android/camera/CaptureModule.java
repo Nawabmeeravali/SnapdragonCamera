@@ -5452,7 +5452,16 @@ public class CaptureModule implements CameraModule, PhotoController,
             try {
                 if (checkSessionAndBuilder(mCaptureSession[BAYER_ID],
                         mPreviewRequestBuilder[BAYER_ID])) {
-                    if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE) {
+                    if (mIsRecordingVideo && mHighSpeedCapture) {
+                        if (mCaptureSession[BAYER_ID] instanceof
+                                CameraConstrainedHighSpeedCaptureSession) {
+                            List list = ((CameraConstrainedHighSpeedCaptureSession)mCaptureSession[BAYER_ID])
+                                    .createHighSpeedRequestList(mPreviewRequestBuilder[BAYER_ID].build());
+                            ((CameraConstrainedHighSpeedCaptureSession) mCaptureSession[BAYER_ID])
+                                    .setRepeatingBurst(list, mCaptureCallback, mCameraHandler);
+                        }
+                    } else if (mPostProcessor.isZSLEnabled() && getCameraMode() != DUAL_MODE
+                            && !isRecordingVideo()) {
                         setRepeatingBurstForZSL(BAYER_ID);
                     } else {
                         mCaptureSession[BAYER_ID].setRepeatingRequest(mPreviewRequestBuilder[BAYER_ID]
