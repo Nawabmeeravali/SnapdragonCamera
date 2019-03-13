@@ -2901,7 +2901,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             height = previewSize.y;
         }
 
-        Log.d(TAG, "updatePreviewSize final preview size = " + width + ", " + height);
+        Log.d(TAG, "updatePreviewSize final Picture preview size = " + width + ", " + height);
 
         mPreviewSize = new Size(width, height);
         mUI.setPreviewSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
@@ -3676,7 +3676,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (previewSize != null) {
             mVideoPreviewSize = new Size(previewSize.x, previewSize.y);
         }
-        Log.d(TAG, "updatePreviewSize final preview size = " + mVideoPreviewSize.getWidth()
+        Log.d(TAG, "updateVideoSize Final Video preview size = " + mVideoPreviewSize.getWidth()
                 + ", " + mVideoPreviewSize.getHeight());
     }
 

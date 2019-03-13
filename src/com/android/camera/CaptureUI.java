@@ -1410,6 +1410,7 @@ public class CaptureUI implements FocusOverlayManager.FocusUI,
     public void releaseSoundPool() {
         if (mCountDownView != null) {
             mCountDownView.releaseSoundPool();
+            mCountDownView = null;
         }
     }
 
