@@ -1158,7 +1158,15 @@ public class PostProcessor{
     ImageReader.OnImageAvailableListener processedImageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader reader) {
-            final Image image = reader.acquireNextImage();
+            Image nextImage = null;
+            try {
+                nextImage = reader.acquireNextImage();
+            }catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
+            if (nextImage == null)
+                return;
+            final Image image = nextImage;
             if(DEBUG_ZSL) Log.d(TAG, "ZSL image Reprocess is done "+image.getTimestamp());
             mSavingHander.post(new Runnable() {
                 public void run() {
