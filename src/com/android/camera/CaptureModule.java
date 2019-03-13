@@ -5356,7 +5356,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void setDisplayOrientation() {
         mDisplayRotation = CameraUtil.getDisplayRotation(mActivity);
-        mDisplayOrientation = CameraUtil.getDisplayOrientation(mDisplayRotation, getMainCameraId());
+        mDisplayOrientation = CameraUtil.getDisplayOrientationCamera2(mDisplayRotation, getMainCameraId());
     }
 
     @Override
