@@ -1912,4 +1912,10 @@ private void filterHFROptions() {
         editor.commit();
     }
 
+    public boolean isDeveloperEnabled() {
+        SharedPreferences sp = mContext.getSharedPreferences(
+                ComboPreferences.getGlobalSharedPreferencesName(mContext),
+                Context.MODE_PRIVATE);
+        return sp.getBoolean(SettingsManager.KEY_DEVELOPER_MENU, false);
+    }
 }
