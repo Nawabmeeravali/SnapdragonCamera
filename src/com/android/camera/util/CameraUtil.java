@@ -468,18 +468,32 @@ public class CameraUtil {
         return naturalWidth < naturalHeight;
     }
 
+    public static int getDisplayOrientationCamera2(int degrees, int cameraId) {
+        CameraCharacteristics info = CameraHolder.instance().getCameraCharacteristics(cameraId);
+        int result;
+        if (info.get(CameraCharacteristics.LENS_FACING) ==
+                CameraCharacteristics.LENS_FACING_FRONT) {
+            result = (info.get(CameraCharacteristics.SENSOR_ORIENTATION) + degrees) % 360;
+            result = (360 - result) % 360;  // compensate the mirror
+        } else {
+            result = (info.get(CameraCharacteristics.SENSOR_ORIENTATION) - degrees + 360) % 360;
+        }
+        return result;
+    }
+
     public static int getDisplayOrientation(int degrees, int cameraId) {
         // See android.hardware.Camera.setDisplayOrientation for
         // documentation.
+        int result = 0;
         Camera.CameraInfo info = new Camera.CameraInfo();
         Camera.getCameraInfo(cameraId, info);
-        int result;
         if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             result = (info.orientation + degrees) % 360;
             result = (360 - result) % 360;  // compensate the mirror
         } else {  // back-facing
             result = (info.orientation - degrees + 360) % 360;
         }
+
         return result;
     }
 

@@ -1361,6 +1361,10 @@ private void filterHFROptions() {
     }
 
     private List<String> getSupportedVideoSize(int cameraId) {
+        int id = 0;
+        if (cameraId == 0 || cameraId == 1) {
+            id = cameraId;
+        }
         StreamConfigurationMap map = mCharacteristics.get(cameraId).get(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         Size[] sizes = map.getOutputSizes(MediaRecorder.class);
@@ -1374,7 +1378,7 @@ private void filterHFROptions() {
                 continue;
             }
             int profile = CameraSettings.VIDEO_QUALITY_TABLE.get(sizes[i].toString());
-            if (!CamcorderProfile.hasProfile(cameraId, profile)) {
+            if (!CamcorderProfile.hasProfile(id, profile)) {
                 continue;
             }
             if (getSupportedVideoEncoders(sizes[i]).size() <= 0) {
