@@ -2379,7 +2379,13 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                         mActivity.updateThumbnail(bytes);
                         image.close();
-                        mUI.enableShutter(true);
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d(TAG, "image available then enable shutter button " );
+                                mUI.enableShutter(true);
+                            }
+                        });
                     }
                 }, mImageAvailableHandler);
     }
