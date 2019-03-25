@@ -5208,7 +5208,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     }
 
     private void applyFlash(CaptureRequest.Builder request, int id) {
-        if (mSettingsManager.isFlashSupported(id)) {
+        if (mSettingsManager.isFlashSupported(id) && !isProMode()) {
             String value = mSettingsManager.getValue(SettingsManager.KEY_FLASH_MODE);
             applyFlash(request, value);
         } else {
@@ -6017,6 +6017,10 @@ public class CaptureModule implements CameraModule, PhotoController,
 
 
     private void setProModeVisible() {
+        mUI.initializeProMode(!mPaused && isProMode());
+    }
+
+    private boolean isProMode() {
         String scene = mSettingsManager.getValue(SettingsManager.KEY_SCENE_MODE);
         boolean promode = false;
         if (scene != null) {
@@ -6025,7 +6029,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                 promode = true;
             }
         }
-        mUI.initializeProMode(!mPaused && promode);
+        return promode;
     }
 
     public static class HeifImage {
