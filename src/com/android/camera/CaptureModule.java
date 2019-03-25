@@ -5515,6 +5515,8 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void setRepeatingBurstForZSL(int id)
             throws CameraAccessException,IllegalStateException{
+        if (!mPostProcessor.isZSLEnabled())
+            return;
         List<CaptureRequest> requests =
                 new ArrayList<CaptureRequest>();
         CaptureRequest previewZslRequest = mPreviewRequestBuilder[id].build();
