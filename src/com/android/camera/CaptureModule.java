@@ -282,6 +282,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.hfr.sizes", int[].class);
     public static final CaptureRequest.Key<Boolean> bokeh_enable = new CaptureRequest.Key<>(
             "org.codeaurora.qcamera3.bokeh.enable", Boolean.class);
+    public static final CaptureRequest.Key<Boolean> sat_enable = new CaptureRequest.Key<>(
+            "org.codeaurora.qcamera3.sat.on", Boolean.class);
     public static final CaptureRequest.Key<Integer> bokeh_blur_level = new CaptureRequest.Key<>(
             "org.codeaurora.qcamera3.bokeh.blurLevel", Integer.class);
     public static final CaptureResult.Key<Integer> bokeh_status =
@@ -2666,7 +2668,19 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyExposureMeteringModes(builder);
         applyEarlyPCR(builder);
         enableBokeh(builder);
+        enableSat(builder,id);
         applyWbColorTemperature(builder);
+    }
+
+    private void enableSat(CaptureRequest.Builder request, int id) {
+        boolean isLogicalId = mSettingsManager.isLogicalCamera(id);
+        if (!mBokehEnabled && isLogicalId) {
+            try {
+                request.set(CaptureModule.sat_enable, true);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "can not find vendor tag : org.codeaurora.qcamera3.sat");
+            }
+        }
     }
 
     /**
