@@ -1195,8 +1195,8 @@ public class PostProcessor{
                                 bytes, title, date, null, image.getCropRect().width(), image.getCropRect().height(),
                                 orientation, exif, mController.getMediaSavedListener(), mActivity.getContentResolver(), "jpeg");
                         mController.updateThumbnailJpegData(bytes);
-                        image.close();
                     }
+                    image.close();
                 }
             });
         }
