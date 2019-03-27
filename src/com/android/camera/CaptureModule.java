@@ -1390,6 +1390,8 @@ public class CaptureModule implements CameraModule, PhotoController,
         } catch (NullPointerException e) {
             Log.e(TAG,"NullPointerException occurred error ="+e.getMessage());
             setCameraModeSwitcherAllowed(true);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG,"IllegalArgumentException occurred error =" +e.getMessage());
         }
     }
 
