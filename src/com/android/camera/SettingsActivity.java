@@ -137,6 +137,10 @@ public class SettingsActivity extends PreferenceActivity {
                     if (pref.getKey().equals(SettingsManager.KEY_MANUAL_EXPOSURE)) {
                         UpdateManualExposureSettings();
                     }
+
+                    if (pref.getKey().equals(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE)) {
+                        updateDIS();
+                    }
                 }
             }
         }
@@ -473,6 +477,19 @@ public class SettingsActivity extends PreferenceActivity {
             alert.show();
         } else if (manualExposureMode.equals(gainsPriority)) {
             handleManualGainsPriority(linear, ISOtext, ExpTimeInput, pref);
+        }
+    }
+
+    private void updateDIS() {
+        String hfr = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_HIGH_FRAME_RATE);
+        SwitchPreference disPref = (SwitchPreference) findPreference(
+                mSettingsManager.KEY_DIS);
+        if (hfr != null && !hfr.equals("off") && Integer.valueOf(hfr.substring(3)) > 60) {
+            disPref.setChecked(false);
+            disPref.setEnabled(false);
+            mSettingsManager.setValue(mSettingsManager.KEY_DIS, "off");
+        } else {
+            disPref.setEnabled(true);
         }
     }
 
