@@ -342,6 +342,7 @@ public class CaptureModule implements CameraModule, PhotoController,
     private SettingsManager mSettingsManager;
     private long SECONDARY_SERVER_MEM;
     private boolean mLongshotActive = false;
+    private boolean mSingleshotActive = false;
     private CameraCharacteristics mMainCameraCharacteristics;
     private int mDisplayRotation;
     private int mDisplayOrientation;
@@ -1904,6 +1905,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     mUI.doShutterAnimation();
                                 }
                             });
+                        } else {
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mUI.enableShutter(true);
+                                }
+                            });
                         }
                     }
 
@@ -2241,6 +2249,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     });
                                 }
                                 Log.d(TAG, "image available for cam: " + mCamId);
+                                if (!mLongshotActive && !mSingleshotActive) {
+                                    return;
+                                }
+
                                 Image image = reader.acquireNextImage();
 
                                 if (isMpoOn()) {
@@ -2831,6 +2843,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mState[i] = STATE_PREVIEW;
         }
         mLongshotActive = false;
+        mSingleshotActive = false;
         updateZoom();
         updatePreviewSurfaceReadyState(false);
     }
@@ -3650,6 +3663,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mLongshotActive = false;
             mPostProcessor.stopLongShot();
             try{
+                mCurrentSession.abortCaptures();
                 setRepeatingBurstForZSL(getMainCameraId());
             }catch (CameraAccessException|IllegalStateException e){
                 e.printStackTrace();
@@ -4553,6 +4567,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             if (mUI.isCountingDown()) {
                 mUI.cancelCountDown();
             }
+            mSingleshotActive = true;
             if (seconds > 0) {
                 mUI.startCountDown(seconds, true);
             } else {
@@ -4617,6 +4632,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
             Log.d(TAG, "Start Longshot");
             mLongshotActive = true;
+            mSingleshotActive = false;
             try{
                 setRepeatingBurstForZSL(getMainCameraId());
             }catch (CameraAccessException|IllegalStateException e){
