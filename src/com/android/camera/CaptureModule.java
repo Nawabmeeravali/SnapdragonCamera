@@ -898,6 +898,11 @@ public class CaptureModule implements CameraModule, PhotoController,
                             lockExposure(id);
                         }
                     }
+                } else if (aeState == null ||
+                        aeState == CaptureResult.CONTROL_AE_STATE_INACTIVE) {
+                    // AE Mode is OFF, the AE state is always CONTROL_AE_STATE_INACTIVE
+                    // then begain capture and ignore lock AE.
+                    checkAfAeStatesAndCapture(id);
                 } else if (mPrecaptureRequestHashCode[id] == result.getRequest().hashCode()) {
                     Log.i(TAG, "AE trigger request result received, but not converged");
                     mPrecaptureRequestHashCode[id] = 0;
@@ -1773,7 +1778,14 @@ public class CaptureModule implements CameraModule, PhotoController,
                 addPreviewSurface(captureBuilder, null, id);
             }
             VendorTagUtil.setCdsMode(captureBuilder, 0);// CDS 0-OFF, 1-ON, 2-AUTO
+            applyAFRegions(captureBuilder, id);
+            applyAERegions(captureBuilder, id);
             applySettingsForCapture(captureBuilder, id);
+
+            if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
+                float value = mSettingsManager.getFocusValue(SettingsManager.KEY_FOCUS_DISTANCE);
+                applyFocusDistance(captureBuilder, String.valueOf(value));
+            }
 
             if(isClearSightOn()) {
                 captureStillPictureForClearSight(id);
