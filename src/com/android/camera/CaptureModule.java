@@ -1564,9 +1564,15 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void takePicture() {
         Log.d(TAG, "takePicture");
         mUI.enableShutter(false);
-        if (mSettingsManager.isZSLInHALEnabled()) {
+        if ((mSettingsManager.isZSLInHALEnabled() &&
+                !isFlashOn(getMainCameraId()) && (mPreviewCaptureResult != null &&
+                mPreviewCaptureResult.get(CaptureResult.CONTROL_AE_STATE) !=
+                        CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED &&
+                mPreviewCaptureResult.getRequest().
+                        get(CaptureRequest.CONTROL_AE_LOCK) != Boolean.TRUE)) ||
+                isActionImageCapture()) {
             takeZSLPictureInHAL();
-        }else {
+        } else {
             if (isBackCamera()) {
                 switch (getCameraMode()) {
                     case DUAL_MODE:
@@ -1601,6 +1607,10 @@ public class CaptureModule implements CameraModule, PhotoController,
                 lockFocus(cameraId);
             }
         }
+    }
+
+    private boolean isActionImageCapture() {
+        return mIntentMode == INTENT_MODE_CAPTURE;
     }
 
     private boolean takeZSLPicture(int cameraId) {
@@ -5208,6 +5218,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void applyFlash(CaptureRequest.Builder request, String value) {
         String redeye = mSettingsManager.getValue(SettingsManager.KEY_REDEYE_REDUCTION);
+        if(DEBUG) Log.d(TAG, "applyFlash: " + value);
         if (redeye != null && redeye.equals("on") && !mLongshotActive) {
             request.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
