@@ -5574,12 +5574,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             try {
                 if (checkSessionAndBuilder(mCaptureSession[FRONT_ID],
                         mPreviewRequestBuilder[FRONT_ID])) {
-                    if (mPostProcessor.isZSLEnabled()) {
-                        setRepeatingBurstForZSL(FRONT_ID);
-                    } else {
-                        mCaptureSession[FRONT_ID].setRepeatingRequest(mPreviewRequestBuilder[FRONT_ID]
-                                .build(), mCaptureCallback, mCameraHandler);
-                    }
+                    mCaptureSession[FRONT_ID].setRepeatingRequest(mPreviewRequestBuilder[FRONT_ID]
+                            .build(), mCaptureCallback, mCameraHandler);
                 }
             } catch (CameraAccessException | IllegalStateException e) {
                 e.printStackTrace();
