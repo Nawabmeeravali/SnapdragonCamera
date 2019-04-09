@@ -3944,6 +3944,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mUI.resetPauseButton();
                         mRecordingTotalTime = 0L;
                         mRecordingStartTime = SystemClock.uptimeMillis();
+                        mUI.enableShutter(true);
                         mUI.showRecordingUI(true, false);
                         updateRecordingTime();
                         keepScreenOn();
