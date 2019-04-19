@@ -133,6 +133,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeoutException;
 
@@ -213,6 +214,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     private static final int NORMAL_SESSION_MAX_FPS = 30;
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
+
+    private static final int MAX_IMAGE_BUFFER_SIZE = 10;
+
+    private static final int mLongShotLimitNums = PersistUtil.getLongshotShotLimit();
+    private AtomicInteger mFrameSendNums = new AtomicInteger(0);
+    private AtomicInteger mImageArrivedNums = new AtomicInteger(0);
 
     public static final boolean DEBUG =
             (PersistUtil.getCamera2Debug() == PersistUtil.CAMERA2_DEBUG_DUMP_LOG) ||
@@ -1818,7 +1825,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     String value = mSettingsManager.getValue(SettingsManager.KEY_JPEG_QUALITY);
                     int quality = getQualityNumber(value);
                     int orientation = CameraUtil.getJpegRotation(id,mOrientation);
-                    int imageCount = mLongshotActive? PersistUtil.getLongshotShotLimit() : 1;
+                    int imageCount = mLongshotActive? mLongShotLimitNums : 1;
                     HeifWriter writer = createHEIFEncoder(path,mPictureSize.getWidth(),mPictureSize.getHeight(),
                             orientation,imageCount,quality);
                     if (writer != null) {
@@ -1906,84 +1913,99 @@ public class CaptureModule implements CameraModule, PhotoController,
         }
     }
 
+    private CameraCaptureSession.CaptureCallback mLongshotCallBack =
+            new CameraCaptureSession.CaptureCallback() {
+
+        @Override
+        public void onCaptureStarted(CameraCaptureSession session, CaptureRequest request,
+        long timestamp, long frameNumber) {
+            if (mLongshotActive) {
+                mFrameSendNums.incrementAndGet();
+                Log.d(TAG, "captureStillPictureForLongshot onCaptureStarted");
+                if (mFrameSendNums.get() >= mLongShotLimitNums) {
+                    mLongshotActive = false;
+                }
+            }
+        }
+
+        @Override
+        public void onCaptureCompleted(CameraCaptureSession session,
+                CaptureRequest request,
+                TotalCaptureResult result) {
+            int id = getMainCameraId();
+            Log.d(TAG, "captureStillPictureForLongshot onCaptureCompleted: " + id);
+            if (DEBUG) {
+                Log.d(TAG, "captureStillPictureForLongshot onCaptureCompleted mFrameSendNums : "
+                        + mFrameSendNums.get() + ", mLongShotLimitNums :" + mLongShotLimitNums);
+            }
+            if (mLongshotActive) {
+                checkAndPlayShutterSound(id);
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUI.doShutterAnimation();
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void onCaptureFailed(CameraCaptureSession session,
+                CaptureRequest request,
+                CaptureFailure result) {
+            Log.d(TAG, "captureStillPictureForLongshot onCaptureFailed: ");
+            if (mLongshotActive) {
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mUI.doShutterAnimation();
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void onCaptureSequenceCompleted(CameraCaptureSession session, int
+                sequenceId, long frameNumber) {
+            int id = getMainCameraId();
+            if (mSettingsManager.getSavePictureFormat() == SettingsManager.HEIF_FORMAT) {
+                if (mHeifImage != null) {
+                    try {
+                        mHeifImage.getWriter().stop(5000);
+                        mHeifImage.getWriter().close();
+                        mActivity.getMediaSaveService().addHEIFImage(mHeifImage.getPath(),
+                                mHeifImage.getTitle(), mHeifImage.getDate(), null,
+                                mPictureSize.getWidth(), mPictureSize.getHeight(),
+                                mHeifImage.getOrientation(), null, mContentResolver,
+                                mOnMediaSavedListener, mHeifImage.getQuality(), "heifs");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            mHeifOutput.removeSurface(mHeifImage.getInputSurface());
+                            session.updateOutputConfiguration(mHeifOutput);
+                            mHeifImage = null;
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            Log.d(TAG, "captureStillPictureForLongshot onCaptureSequenceCompleted: " + id);
+            mLongshotActive = false;
+            unlockFocus(id);
+        }
+    };
+
     private void captureStillPictureForLongshot(CaptureRequest.Builder captureBuilder, int id) throws CameraAccessException{
         Log.d(TAG, "captureStillPictureForLongshot " + id);
         List<CaptureRequest> burstList = new ArrayList<>();
-        for (int i = 0; i < PersistUtil.getLongshotShotLimit(); i++) {
+        for (int i = 0; i < mLongShotLimitNums; i++) {
             burstList.add(captureBuilder.build());
         }
-        mCaptureSession[id].captureBurst(burstList, new
-                CameraCaptureSession.CaptureCallback() {
-
-                    @Override
-                    public void onCaptureCompleted(CameraCaptureSession session,
-                                                   CaptureRequest request,
-                                                   TotalCaptureResult result) {
-                        Log.d(TAG, "captureStillPictureForLongshot onCaptureCompleted: " + id);
-                        if (mLongshotActive) {
-                            checkAndPlayShutterSound(id);
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mUI.doShutterAnimation();
-                                }
-                            });
-                        } else {
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mUI.enableShutter(true);
-                                }
-                            });
-                        }
-                    }
-
-                    @Override
-                    public void onCaptureFailed(CameraCaptureSession session,
-                                                CaptureRequest request,
-                                                CaptureFailure result) {
-                        Log.d(TAG, "captureStillPictureForLongshot onCaptureFailed: " + id);
-                        if (mLongshotActive) {
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mUI.doShutterAnimation();
-                                }
-                            });
-                        }
-                    }
-
-                    @Override
-                    public void onCaptureSequenceCompleted(CameraCaptureSession session, int
-                            sequenceId, long frameNumber) {
-                        if (mSettingsManager.getSavePictureFormat() == SettingsManager.HEIF_FORMAT) {
-                            if (mHeifImage != null) {
-                                try {
-                                    mHeifImage.getWriter().stop(5000);
-                                    mHeifImage.getWriter().close();
-                                    mActivity.getMediaSaveService().addHEIFImage(mHeifImage.getPath(),
-                                            mHeifImage.getTitle(),mHeifImage.getDate(),null,mPictureSize.getWidth(),mPictureSize.getHeight(),
-                                            mHeifImage.getOrientation(),null,mContentResolver,mOnMediaSavedListener,mHeifImage.getQuality(),"heifs");
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                } finally {
-                                    try{
-                                        mHeifOutput.removeSurface(mHeifImage.getInputSurface());
-                                        session.updateOutputConfiguration(mHeifOutput);
-                                        mHeifImage = null;
-                                    }catch (CameraAccessException e) {
-                                        e.printStackTrace();
-                                    }catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                        }
-                        Log.d(TAG, "captureStillPictureForLongshot onCaptureSequenceCompleted: " + id);
-                        mLongshotActive = false;
-                        unlockFocus(id);
-                    }
-                }, mCaptureCallbackHandler);
+        mCaptureSession[id].captureBurst(burstList, mLongshotCallBack, mCaptureCallbackHandler);
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -2265,7 +2287,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mPostProcessor.onImageReaderReady(mImageReader[i], mSupportedMaxPictureSize, mPictureSize);
                     } else if (i == getMainCameraId()) {
                         mImageReader[i] = ImageReader.newInstance(mPictureSize.getWidth(),
-                                mPictureSize.getHeight(), imageFormat, PersistUtil.getLongshotShotLimit());
+                                mPictureSize.getHeight(), imageFormat, MAX_IMAGE_BUFFER_SIZE);
 
                         ImageAvailableListener listener = new ImageAvailableListener(i) {
                             @Override
@@ -2278,13 +2300,20 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         }
                                     });
                                 }
+
+                                if (DEBUG) {
+                                    Log.v(TAG, "Image available mFrameSendNums :" +
+                                            mFrameSendNums.get() + ", mImageArrivedNums :" +
+                                            mImageArrivedNums.get());
+                                }
+                                Image image = reader.acquireNextImage();
                                 Log.d(TAG, "image available for cam: " + mCamId);
-                                if (!mLongshotActive && !mSingleshotActive) {
+                                if (!mLongshotActive && !mSingleshotActive && mFrameSendNums.get()
+                                        == mImageArrivedNums.get()) {
+                                    image.close();
                                     return;
                                 }
-
-                                Image image = reader.acquireNextImage();
-
+                                mImageArrivedNums.incrementAndGet();
                                 if (isMpoOn()) {
                                     mMpoSaveHandler.obtainMessage(
                                             MpoSaveHandler.MSG_NEW_IMG, mCamId, 0, image).sendToTarget();
@@ -2355,9 +2384,12 @@ public class CaptureModule implements CameraModule, PhotoController,
                         mImageReader[i].setOnImageAvailableListener(listener, mImageAvailableHandler);
 
                         if (mSaveRaw) {
-                            mRawImageReader[i] = ImageReader.newInstance(mSupportedRawPictureSize.getWidth(),
-                                    mSupportedRawPictureSize.getHeight(), ImageFormat.RAW10, PersistUtil.getLongshotShotLimit());
-                            mRawImageReader[i].setOnImageAvailableListener(listener, mImageAvailableHandler);
+                            mRawImageReader[i] = ImageReader.newInstance(
+                                    mSupportedRawPictureSize.getWidth(),
+                                    mSupportedRawPictureSize.getHeight(), ImageFormat.RAW10,
+                                    MAX_IMAGE_BUFFER_SIZE);
+                            mRawImageReader[i].setOnImageAvailableListener(listener,
+                                    mImageAvailableHandler);
                         }
                     }
                 }
@@ -3706,12 +3738,6 @@ public class CaptureModule implements CameraModule, PhotoController,
             Log.d(TAG, "Longshot button up");
             mLongshotActive = false;
             mPostProcessor.stopLongShot();
-            try{
-                mCurrentSession.abortCaptures();
-                setRepeatingBurstForZSL(getMainCameraId());
-            }catch (CameraAccessException|IllegalStateException e){
-                if(DEBUG)e.printStackTrace();
-            }
             mUI.enableVideo(!mLongshotActive);
         }
     }
@@ -4702,9 +4728,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             mActivity.updateStorageSpaceAndHint();
 
             long storageSpace = mActivity.getStorageSpaceBytes();
-            int mLongShotCaptureCountLimit = PersistUtil.getLongshotShotLimit();
 
-            if (storageSpace <= Storage.LOW_STORAGE_THRESHOLD_BYTES + mLongShotCaptureCountLimit
+            if (storageSpace <= Storage.LOW_STORAGE_THRESHOLD_BYTES + mLongShotLimitNums
                     * mJpegFileSizeEstimation) {
                 Log.i(TAG, "Not enough space or storage not ready. remaining=" + storageSpace);
                 return;
@@ -4724,6 +4749,8 @@ public class CaptureModule implements CameraModule, PhotoController,
             Log.d(TAG, "Start Longshot");
             mLongshotActive = true;
             mSingleshotActive = false;
+            mFrameSendNums.getAndSet(0);
+            mImageArrivedNums.getAndSet(0);
             try{
                 setRepeatingBurstForZSL(getMainCameraId());
             }catch (CameraAccessException|IllegalStateException e){
