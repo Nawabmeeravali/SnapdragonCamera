@@ -2153,6 +2153,13 @@ public class CaptureModule implements CameraModule, PhotoController,
                                         e.printStackTrace();
                                     }
                                 }
+                                mActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d(TAG, "heif image available then enable shutter button " );
+                                        mUI.enableShutter(true);
+                                    }
+                                });
                             }
                         }
                     }, mCaptureCallbackHandler);
@@ -3931,10 +3938,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                     }
                 }, null);
             } else {
-                surfaces.add(mVideoSnapshotImageReader.getSurface());
-                mCameraDevice[cameraId].createCaptureSession(surfaces, new CameraCaptureSession
-                        .StateCallback() {
-
+                CameraCaptureSession.StateCallback stateCallback = new CameraCaptureSession.StateCallback() {
                     @Override
                     public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                         Log.d(TAG, "StartRecordingVideo session onConfigured");
@@ -3973,7 +3977,24 @@ public class CaptureModule implements CameraModule, PhotoController,
                         setCameraModeSwitcherAllowed(true);
                         Toast.makeText(mActivity, "Video Failed", Toast.LENGTH_SHORT).show();
                     }
-                }, null);
+                };
+                if (mSettingsManager.getSavePictureFormat() == SettingsManager.HEIF_FORMAT &&
+                mLiveShotInitHeifWriter != null) {
+                    List<OutputConfiguration> outputConfigurations =
+                            new ArrayList<OutputConfiguration>();
+                    for(Surface s: surfaces){
+                        outputConfigurations.add(new OutputConfiguration(s));
+                    }
+                    mLiveShotOutput = new OutputConfiguration(
+                            mLiveShotInitHeifWriter.getInputSurface());
+                    mLiveShotOutput.enableSurfaceSharing();
+                    outputConfigurations.add(mLiveShotOutput);
+                    mCameraDevice[cameraId].createCaptureSessionByOutputConfigurations(
+                            outputConfigurations,stateCallback,null);
+                } else {
+                    surfaces.add(mVideoSnapshotImageReader.getSurface());
+                    mCameraDevice[cameraId].createCaptureSession(surfaces,stateCallback,null);
+                }
             }
         } catch (CameraAccessException | IOException | IllegalStateException e) {
             setCameraModeSwitcherAllowed(true);
