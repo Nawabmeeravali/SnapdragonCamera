@@ -51,7 +51,8 @@
       "pref_camera2_mpo_key":"off"}
     ,
     "18":
-      {"pref_camera2_coloreffect_key":"0"}
+      {"pref_camera2_coloreffect_key":"0",
+       "pref_camera2_selfiemirror_key":"off"}
     ,
     "102":
     {"pref_camera2_coloreffect_key":"0"}
@@ -130,6 +131,7 @@
   "pref_camera2_selfiemirror_key":
   {
     "on":{"pref_camera2_longshot_key":"off"},
+    "on":{"pref_camera2_scenemode_key":"0"},
     "off":{}
   }
 }
