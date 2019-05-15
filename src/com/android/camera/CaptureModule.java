@@ -811,6 +811,12 @@ public class CaptureModule implements CameraModule, PhotoController,
             mCameraDevice[id] = null;
             mCameraOpenCloseLock.release();
             mCamerasOpened = false;
+
+            if (null != mActivity) {
+                Toast.makeText(mActivity,"open camera error id =" + id,
+                        Toast.LENGTH_LONG).show();
+                mActivity.finish();
+            }
         }
 
         @Override
