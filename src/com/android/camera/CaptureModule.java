@@ -1826,7 +1826,9 @@ public class CaptureModule implements CameraModule, PhotoController,
                         Surface input = writer.getInputSurface();
                         mHeifOutput.addSurface(input);
                         try{
-                            mCaptureSession[id].updateOutputConfiguration(mHeifOutput);
+                            if (mCaptureSession[id] != null) {
+                                mCaptureSession[id].updateOutputConfiguration(mHeifOutput);
+                            }
                             captureBuilder.addTarget(input);
                             writer.start();
                         } catch (IllegalStateException | IllegalArgumentException e) {
@@ -1844,7 +1846,8 @@ public class CaptureModule implements CameraModule, PhotoController,
                     //CameraDevice was already closed
                     return;
                 }
-                if (!mIsSupportedQcfa && mUI.getCurrentProMode() != ProMode.MANUAL_MODE) {
+                if (!mIsSupportedQcfa && mUI.getCurrentProMode() != ProMode.MANUAL_MODE
+                        && mCaptureSession[id] != null) {
                     mCaptureSession[id].stopRepeating();
                 }
                 if (mLongshotActive) {
