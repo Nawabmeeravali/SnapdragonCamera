@@ -2874,6 +2874,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         setBokehModeVisible();
         mJpegImageData = null;
         closeVideoFileDescriptor();
+        if (mIntentMode != CaptureModule.INTENT_MODE_NORMAL) {
+            mActivity.setResultEx(Activity.RESULT_CANCELED, new Intent());
+            mActivity.finish();
+        }
     }
 
     @Override
