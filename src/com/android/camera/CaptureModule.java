@@ -703,8 +703,11 @@ public class CaptureModule implements CameraModule, PhotoController,
         public void onCaptureBufferLost(CameraCaptureSession session, CaptureRequest request,
                                         Surface target, long frameNumber) {
             super.onCaptureBufferLost(session, request, target, frameNumber);
+            if (mPaused) {
+                return;
+            }
             int id = (int) request.getTag();
-            if (target == mImageReader[id].getSurface()) {
+            if (mImageReader[id]!= null && target == mImageReader[id].getSurface()) {
                 mBufferLostFrameNumbers[mBufferLostIndex] = frameNumber;
                 mBufferLostIndex = ++mBufferLostIndex % mBufferLostFrameNumbers.length;
             }
