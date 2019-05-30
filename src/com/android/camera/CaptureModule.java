@@ -2618,6 +2618,7 @@ public class CaptureModule implements CameraModule, PhotoController,
 
                     if (mCaptureSession[i] != null) {
                         if (isAbortCapturesEnable()) {
+                            mCaptureSession[i].stopRepeating();
                             mCaptureSession[i].abortCaptures();
                             Log.d(TAG, "Closing camera call abortCaptures ");
                         }
@@ -3878,6 +3879,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mUI.hideUIwhileRecording();
             mCameraHandler.removeMessages(CANCEL_TOUCH_FOCUS, mCameraId[cameraId]);
             if (isAbortCapturesEnable() && (mCaptureSession[cameraId] != null)) {
+                mCaptureSession[cameraId].stopRepeating();
                 mCaptureSession[cameraId].abortCaptures();
                 Log.d(TAG, "startRecordingVideo call abortCaptures befor close preview ");
             }
@@ -4337,6 +4339,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (isAbortCapturesEnable()) {
             try {
                 if (mCurrentSession != null) {
+                    mCurrentSession.stopRepeating();
                     mCurrentSession.abortCaptures();
                     Log.d(TAG, "stopRecordingVideo call abortCaptures ");
                 }
