@@ -4158,6 +4158,7 @@ public class CaptureModule implements CameraModule, PhotoController,
         applyZoom(builder, cameraId);
         applyVideoHDR(builder);
         applyEarlyPCR(builder);
+        enableSat(builder, cameraId);
     }
 
     private void applyVideoHDR(CaptureRequest.Builder builder) {
