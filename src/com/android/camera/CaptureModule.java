@@ -4409,8 +4409,12 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void closePreviewSession() {
         Log.d(TAG, "closePreviewSession");
         if (mCurrentSession != null) {
+            int cameraId = getMainCameraId();
             mCurrentSession.close();
             mCurrentSession = null;
+            if (mCurrentSession.equals(mCaptureSession[cameraId])) {
+                mCaptureSession[cameraId] = null;
+            }
         }
     }
 
