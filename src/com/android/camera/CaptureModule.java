@@ -317,6 +317,9 @@ public class CaptureModule implements CameraModule, PhotoController,
     public static CameraCharacteristics.Key<long[]> EXPOSURE_RANGE =
             new CameraCharacteristics.Key<>("org.codeaurora.qcamera3.iso_exp_priority.exposure_time_range", long[].class);
 
+    public static final CaptureRequest.Key<Byte> swMFNR =
+            new CaptureRequest.Key<>("org.codeaurora.qcamera3.swmfnr.enable", byte.class);
+
     private boolean[] mTakingPicture = new boolean[MAX_NUM_CAM];
     private int mControlAFMode = CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE;
     private int mLastResultAFState = -1;
@@ -1796,6 +1799,16 @@ public class CaptureModule implements CameraModule, PhotoController,
         return mPostProcessor;
     }
 
+    private void applyCaptureSWMFNR(CaptureRequest.Builder builder) {
+        boolean isSwMfnrEnable = isSWMFNREnabled();
+        Log.v(TAG, "applyCaptureSWMFNR swmfnrEnable :" + isSwMfnrEnable);
+        try {
+            builder.set(swMFNR, (byte) (isSwMfnrEnable ? 0x01 : 0x00));
+        } catch (IllegalArgumentException e) {
+            Log.w(TAG, "cannot find vendor tag: " + swMFNR.toString());
+        }
+    }
+
     private void captureStillPicture(final int id) {
         Log.d(TAG, "captureStillPicture " + id);
         mJpegImageData = null;
@@ -1823,7 +1836,9 @@ public class CaptureModule implements CameraModule, PhotoController,
             applyAFRegions(captureBuilder, id);
             applyAERegions(captureBuilder, id);
             applySettingsForCapture(captureBuilder, id);
-
+            if (!isLongShotSettingEnabled()) {
+                applyCaptureSWMFNR(captureBuilder);
+            }
             if (mUI.getCurrentProMode() == ProMode.MANUAL_MODE) {
                 float value = mSettingsManager.getFocusValue(SettingsManager.KEY_FOCUS_DISTANCE);
                 applyFocusDistance(captureBuilder, String.valueOf(value));
@@ -2577,6 +2592,17 @@ public class CaptureModule implements CameraModule, PhotoController,
             }
         }
         return true;
+    }
+
+    private boolean isSWMFNREnabled() {
+        boolean swmfnrEnable = false;
+        if (mSettingsManager != null) {
+            String swmfnrValue = mSettingsManager.getValue(SettingsManager.KEY_CAPTURE_SWMFNR_VALUE);
+            if (swmfnrValue != null) {
+                swmfnrEnable = swmfnrValue.equals("1");
+            }
+        }
+        return swmfnrEnable;
     }
 
     private void closeSessions() {
