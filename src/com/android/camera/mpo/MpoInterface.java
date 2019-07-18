@@ -223,24 +223,22 @@ public class MpoInterface {
     public static ArrayList<byte[]> generateXmpFromMpo(byte[] mpoSourceBytes) {
         ArrayList<byte[]> bytes = new ArrayList<>();
         int i;
-        int eoiNumber = 0;
         int index = 0;
         int startIndex;
-        boolean isFirstImage = true;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
             for (i = 0; i < mpoSourceBytes.length - 1; i++) {
                 if (getShort(mpoSourceBytes, i) != (short) 0xFFD9) {
                     continue;
                 }
-                if (++eoiNumber == 2 || !isFirstImage) {
-                    startIndex = index;
-                    index = i + 2;
-                    outputStream.write(mpoSourceBytes, startIndex, index - startIndex);
-                    bytes.add(openNewStream(outputStream));
-                    eoiNumber = 0;
-                    isFirstImage = false;
+                if (i < mpoSourceBytes.length - 3 &&
+                        getShort(mpoSourceBytes,i+2) != (short) 0xFFD8){
+                    continue;
                 }
+                startIndex = index;
+                index = i + 2;
+                outputStream.write(mpoSourceBytes, startIndex, index - startIndex);
+                bytes.add(openNewStream(outputStream));
             }
             outputStream.close();
         } catch (IOException e) {
