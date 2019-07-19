@@ -3088,7 +3088,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mFrameProcessor.onOpen(getFrameProcFilterId(), mPreviewSize);
         }
 
-        if(mPostProcessor.isZSLEnabled()) {
+        if(mPostProcessor.isZSLEnabled() && !isActionImageCapture()) {
             mChosenImageFormat = ImageFormat.PRIVATE;
         } else if(mPostProcessor.isFilterOn() || getFrameFilters().size() != 0 || mPostProcessor.isSelfieMirrorOn()) {
             mChosenImageFormat = ImageFormat.YUV_420_888;
