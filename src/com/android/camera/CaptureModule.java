@@ -4420,10 +4420,10 @@ public class CaptureModule implements CameraModule, PhotoController,
         if (mCurrentSession != null) {
             int cameraId = getMainCameraId();
             mCurrentSession.close();
-            mCurrentSession = null;
             if (mCurrentSession.equals(mCaptureSession[cameraId])) {
                 mCaptureSession[cameraId] = null;
             }
+            mCurrentSession = null;
         }
     }
 
