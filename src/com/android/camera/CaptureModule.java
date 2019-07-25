@@ -2043,7 +2043,13 @@ public class CaptureModule implements CameraModule, PhotoController,
     private void captureStillPictureForLongshot(CaptureRequest.Builder captureBuilder, int id) throws CameraAccessException{
         Log.d(TAG, "captureStillPictureForLongshot " + id);
         List<CaptureRequest> burstList = new ArrayList<>();
+        int burstShotFpsNums = PersistUtil.isBurstShotFpsNums();
         for (int i = 0; i < mLongShotLimitNums; i++) {
+            for (int j = 0; j < burstShotFpsNums; j++) {
+                mPreviewRequestBuilder[id].setTag("preview");
+                burstList.add(mPreviewRequestBuilder[id].build());
+            }
+            captureBuilder.setTag("capture");
             burstList.add(captureBuilder.build());
         }
         mCaptureSession[id].captureBurst(burstList, mLongshotCallBack, mCaptureCallbackHandler);
