@@ -4626,6 +4626,10 @@ public class CaptureModule implements CameraModule, PhotoController,
 
     private void setUpMediaRecorder(int cameraId) throws IOException {
         Log.d(TAG, "setUpMediaRecorder");
+        int id = 0;
+        if (cameraId == 0 || cameraId == 1) {
+            id = cameraId;
+        }
         String videoSize = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_QUALITY);
         int size = CameraSettings.VIDEO_QUALITY_TABLE.get(videoSize);
         Intent intent = mActivity.getIntent();
@@ -4648,8 +4652,8 @@ public class CaptureModule implements CameraModule, PhotoController,
 
         boolean hfr = mHighSpeedCapture && !mHighSpeedRecordingMode;
 
-        if (CamcorderProfile.hasProfile(cameraId, size)) {
-            mProfile = CamcorderProfile.get(cameraId, size);
+        if (CamcorderProfile.hasProfile(id, size)) {
+            mProfile = CamcorderProfile.get(id, size);
         } else {
             if (!"-1".equals(mSettingsManager.getValue(SettingsManager.KEY_SWITCH_CAMERA))) {
                 mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
@@ -4784,7 +4788,7 @@ public class CaptureModule implements CameraModule, PhotoController,
             mMediaRecorder.setLocation((float) loc.getLatitude(),
                     (float) loc.getLongitude());
         }
-        int rotation = CameraUtil.getJpegRotation(cameraId, mOrientation);
+        int rotation = CameraUtil.getJpegRotation(id, mOrientation);
         String videoRotation = mSettingsManager.getValue(SettingsManager.KEY_VIDEO_ROTATION);
         if (videoRotation != null) {
             rotation += Integer.parseInt(videoRotation);
