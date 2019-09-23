@@ -4400,16 +4400,16 @@ public class CaptureModule implements CameraModule, PhotoController,
                     mCurrentSession.stopRepeating();
                     try {
                         mVideoRequestBuilder.set(CaptureModule.recording_end_stream, (byte) 0x01);
+                        if (mCurrentSession instanceof CameraConstrainedHighSpeedCaptureSession) {
+                            List requestList = ((CameraConstrainedHighSpeedCaptureSession)mCurrentSession).
+                                    createHighSpeedRequestList(mVideoRequestBuilder.build());
+                            mCurrentSession.captureBurst(requestList, mCaptureCallback, mCameraHandler);
+                        } else {
+                            mCurrentSession.capture(mVideoRequestBuilder.build(), mCaptureCallback,
+                                    mCameraHandler);
+                        }
                     } catch (IllegalArgumentException illegalArgumentException) {
-                        Log.w(TAG, "can not find vendor tag: org.quic.camera.recording.endOfStream");
-                    }
-                    if (mCurrentSession instanceof CameraConstrainedHighSpeedCaptureSession) {
-                        List requestList = ((CameraConstrainedHighSpeedCaptureSession)mCurrentSession).
-                                createHighSpeedRequestList(mVideoRequestBuilder.build());
-                        mCurrentSession.captureBurst(requestList, mCaptureCallback, mCameraHandler);
-                    } else {
-                        mCurrentSession.capture(mVideoRequestBuilder.build(), mCaptureCallback,
-                                mCameraHandler);
+                        Log.w(TAG, "can not find vendor tag: org.quic.camera.recording.endOfStream or surface not valid");
                     }
                 }
                 if (!isStopRecord) {
