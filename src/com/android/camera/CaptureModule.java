@@ -2208,19 +2208,26 @@ public class CaptureModule implements CameraModule, PhotoController,
                                     try {
                                         mLiveShotImage.getWriter().stop(3000);
                                         mLiveShotImage.getWriter().close();
-                                        mLiveShotOutput.removeSurface(mLiveShotImage.getInputSurface());
-                                        mCurrentSession.updateOutputConfiguration(mLiveShotOutput);
                                         mActivity.getMediaSaveService().addHEIFImage(mLiveShotImage.getPath(),
                                                 mLiveShotImage.getTitle(),mLiveShotImage.getDate(),
                                                 null,mVideoSize.getWidth(),mVideoSize.getHeight(),
                                                 mLiveShotImage.getOrientation(),null,
                                                 mContentResolver,mOnMediaSavedListener,
                                                 mLiveShotImage.getQuality(),"heif");
-                                        mLiveShotImage = null;
                                     } catch (TimeoutException | IllegalStateException e) {
                                         e.printStackTrace();
                                     } catch (Exception e) {
                                         e.printStackTrace();
+                                    } finally {
+                                        try{
+                                            mLiveShotOutput.removeSurface(mLiveShotImage.getInputSurface());
+                                            mCurrentSession.updateOutputConfiguration(mLiveShotOutput);
+                                            mLiveShotImage = null;
+                                        } catch (CameraAccessException e) {
+                                            e.printStackTrace();
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
                                     }
                                 }
                                 mActivity.runOnUiThread(new Runnable() {
