@@ -4415,7 +4415,7 @@ public class CaptureModule implements CameraModule, PhotoController,
                             mCurrentSession.capture(mVideoRequestBuilder.build(), mCaptureCallback,
                                     mCameraHandler);
                         }
-                    } catch (IllegalArgumentException illegalArgumentException) {
+                    } catch (IllegalArgumentException | UnsupportedOperationException exception) {
                         Log.w(TAG, "can not find vendor tag: org.quic.camera.recording.endOfStream or surface not valid");
                     }
                 }
