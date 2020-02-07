@@ -1491,8 +1491,8 @@ public class PhotoModule
 
             mLastPhotoTakenWithRefocus = mRefocus;
             if (mRefocus) {
-                final String[] NAMES = { "00.jpg", "01.jpg", "02.jpg", "03.jpg",
-                    "04.jpg", "DepthMapImage.y", "AllFocusImage.jpg" };
+                final String[] NAMES = { "00.jpg", "01.jpg", "02.jpg", "03.jpg","04.jpg","05.jpg",
+                    "06.jpg","07.jpg", "DepthMapImage.y", "AllFocusImage.jpg" };
                 try {
                     FileOutputStream out = mActivity.openFileOutput(NAMES[mReceivedSnapNum - 1],
                             Context.MODE_PRIVATE);
@@ -1501,7 +1501,7 @@ public class PhotoModule
                 } catch (Exception e) {
                 }
             }
-            if (!mRefocus || (mRefocus && mReceivedSnapNum == 7)) {
+            if (!mRefocus || (mRefocus && mReceivedSnapNum == 10)) {
                 ExifInterface exif = Exif.getExif(jpegData);
                 int orientation = Exif.getOrientation(exif);
                 if(mCameraId == CameraHolder.instance().getFrontCameraId()) {

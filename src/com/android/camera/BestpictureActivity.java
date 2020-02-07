@@ -77,7 +77,7 @@ import static android.app.Activity.RESULT_OK;
 public class BestpictureActivity extends FragmentActivity {
     private static final String TAG = "BestpictureActivity";
     public static final String[] NAMES = {
-        "00", "01", "02", "03", "04", "05", "06", "07", "08", "09"
+        "00", "01", "02", "03", "04", "05", "06", "07", "08", "09","10","11","12","13","14","15","16","17","18","19"
     };
     private static final String INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE =
             "android.media.action.STILL_IMAGE_CAMERA_SECURE";
@@ -85,7 +85,7 @@ public class BestpictureActivity extends FragmentActivity {
             "android.media.action.IMAGE_CAPTURE_SECURE";
     public static final String SECURE_CAMERA_EXTRA = "secure_camera";
     private boolean mSecureCamera;
-    public static final int NUM_IMAGES = 10;
+    public static final int NUM_IMAGES = 20;
 
     private ViewPager mImagePager;
     private PagerAdapter mImagePagerAdapter;
